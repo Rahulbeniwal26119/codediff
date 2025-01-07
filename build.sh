@@ -34,7 +34,7 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-if [-d "/var/www/codediff"]; then
+if [ -d "/var/www/codediff"]; then
     log "Creating backup of existing directory..." "$YELLOW"
     rm -rf /var/www/codediff.backup
     cp -r /var/www/codediff /var/www/codediff.backup
