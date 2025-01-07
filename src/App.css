@@ -1,0 +1,455 @@
+.App {
+  min-height: 100vh;
+  background-color: #1e1e1e;
+  color: #cccccc;
+}
+
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* Ad Container Styles */
+.ad-container {
+  width: 160px; /* Standard skyscraper ad width */
+  padding: 10px;
+  background-color: #252526;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.ad-placeholder {
+  width: 100%;
+  height: 600px; /* Standard skyscraper ad height */
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #555;
+  margin-bottom: 20px;
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  min-width: 0; /* Prevents flex item from overflowing */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-section {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background-color: #252526;
+  border-bottom: 1px solid #404040;
+  min-height: 250px;
+}
+
+.input-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-container h3 {
+  margin: 0;
+  color: #cccccc;
+}
+
+.editor-wrapper {
+  flex: 1;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.editor-wrapper > div {
+  height: 100%;
+}
+
+.diff-section {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .ad-container {
+    display: none; /* Hide ads on smaller screens */
+  }
+  
+  .main-content {
+    padding: 10px;
+  }
+  
+  .input-section {
+    flex-direction: column;
+  }
+}
+
+/* Keep existing diff-container and Monaco editor styles */
+.diff-container {
+  height: 100%;
+  background-color: #1e1e1e;
+}
+
+.diff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #252526;
+  border-bottom: 1px solid #404040;
+}
+
+.diff-options {
+  color: #cccccc;
+}
+
+.diff-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.diff-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-navigation button {
+  background: #3c3c3c;
+  border: none;
+  color: #cccccc;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.diff-navigation button:hover {
+  background: #4c4c4c;
+}
+
+.diff-navigation span {
+  color: #cccccc;
+}
+
+/* Monaco editor specific styles */
+.monaco-editor .margin {
+  background-color: #1e1e1e !important;
+}
+
+.monaco-editor .minimap {
+  display: none;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+
+  h1 {
+    color: #fff;
+  }
+
+  .input-type-toggle button {
+    background: #333;
+    color: #fff;
+    border-color: #444;
+  }
+
+  .input-type-toggle button.active {
+    background: #0056b3;
+  }
+
+  .input-group label {
+    color: #ddd;
+  }
+
+  .input-group textarea {
+    background: #2d2d2d;
+    color: #fff;
+    border-color: #444;
+  }
+
+  .input-group input[type="file"] {
+    background: #2d2d2d;
+    color: #fff;
+    border-color: #444;
+  }
+
+  .diff-container {
+    border-color: #444;
+  }
+}
+
+.diff-viewer {
+  background: #1e1e1e;
+  border-radius: 4px;
+  overflow: hidden;
+  height: calc(100vh - 250px);
+  min-height: 500px;
+}
+
+.diff-header {
+  padding: 12px;
+  border-bottom: 1px solid #444;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  background: #252525;
+}
+
+.diff-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.diff-navigation {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.diff-navigation button {
+  background: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.diff-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.diff-navigation button:hover:not(:disabled) {
+  background: #444;
+}
+
+.diff-content {
+  display: flex;
+  height: calc(100% - 50px);
+}
+
+.diff-pane {
+  flex: 1;
+  border-right: 1px solid #444;
+  overflow: auto;
+}
+
+.diff-pane:last-child {
+  border-right: none;
+}
+
+.diff-pane-header {
+  padding: 8px;
+  background: #252525;
+  color: #fff;
+  border-bottom: 1px solid #444;
+}
+
+.diff-pane pre {
+  margin: 0;
+  padding: 12px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.diff-highlight-red {
+  background-color: rgba(255, 0, 0, 0.2);
+  display: block;
+}
+
+.diff-highlight-green {
+  background-color: rgba(0, 255, 0, 0.2);
+  display: block;
+}
+
+/* Dark scrollbar styles */
+.diff-pane::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.diff-pane::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.diff-pane::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 6px;
+  border: 3px solid #1e1e1e;
+}
+
+/* Add these new styles */
+.header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #252526;
+  border-bottom: 1px solid #404040;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.language-selector select {
+  padding: 6px 12px;
+  background-color: #3c3c3c;
+  color: #cccccc;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.language-selector select:hover {
+  background-color: #4c4c4c;
+}
+
+.file-controls {
+  display: flex;
+  gap: 20px;
+}
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-upload label {
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.file-upload input[type="file"] {
+  background-color: #3c3c3c;
+  color: #cccccc;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.file-upload input[type="file"]::-webkit-file-upload-button {
+  background-color: #4c4c4c;
+  color: #cccccc;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.file-upload input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: #5c5c5c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .header-controls {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .file-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .file-upload {
+    width: 100%;
+  }
+
+  .file-upload input[type="file"] {
+    flex: 1;
+  }
+}
+
+/* Add these new styles */
+.format-button {
+  background-color: #4c4c4c;
+  color: #cccccc;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.format-button:hover {
+  background-color: #5c5c5c;
+}
+
+.format-button:active {
+  background-color: #666;
+}
+
+/* Update file-upload to accommodate the format button */
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Add these new styles */
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.editor-header h3 {
+  margin: 0;
+}
+
+.editor-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.format-button {
+  background-color: #4c4c4c;
+  color: #cccccc;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.format-button:hover {
+  background-color: #5c5c5c;
+}
+
+.format-button:active {
+  background-color: #666;
+}
