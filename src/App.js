@@ -1,6 +1,6 @@
 import { Toaster, toast } from 'react-hot-toast';
-
-import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import React, { useState , useEffect } from 'react';
 import { DiffEditor } from '@monaco-editor/react';
 import './App.css';
 
@@ -10,6 +10,43 @@ function App() {
   const [leftContent, setLeftContent] = useState('{\n  "a": "b",\n  "c": "d"\n}');
   const [rightContent, setRightContent] = useState('{\n  "a": "b",\n  "c": "d"\n}');
   const [selectedLanguage, setSelectedLanguage] = useState('JSON');
+  const { diffId } = useParams(); // Extract the diffId from the URL
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  console.log(diffId);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/code-diff/${diffId}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            toast.error('Diff not found ');
+            return;
+          }
+          throw new Error('Failed to fetch data');
+        }
+
+        const result = await response.json();
+        setData(result);
+        console.log(result.data.code_before);
+        setLeftContent(result.data.code_before);
+        setRightContent(result.data.code_after);
+        setSelectedLanguage(result.data.language);
+        toast.success('Data loaded successfully');
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (diffId) {
+      fetchData();
+    }
+  }, [diffId]);
+
 
   const supportedLanguages = [
     { id: 'json', name: 'JSON' },
