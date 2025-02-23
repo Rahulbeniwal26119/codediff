@@ -58,8 +58,8 @@ function GoogleLogin() {
             const data = await backendResponse.json();
             
             // Store auth data
-            localStorage.setItem("access_token", data.data.access); // Updated to match response structure
-            localStorage.setItem("refresh_token", data.data.refresh); // Updated to match response structure
+            localStorage.setItem("access_token", data.data.access);
+            localStorage.setItem("refresh_token", data.data.refresh);
             localStorage.setItem("user", JSON.stringify({
                 email: data.data.user.email,
                 image: data.data.user.image,
@@ -98,8 +98,8 @@ function GoogleLogin() {
         <div className="auth-container">
             {user ? (
                 <div className="flex items-center space-x-2">
-                    <img src={user.picture || user.avatar} alt="Profile" className="w-8 h-8 rounded-full" />
-                    <span className="text-sm font-medium">{user.name}</span>
+                    <img src={user.image} alt="Profile" className="w-8 h-8 rounded-full" />
+                    <span className="text-sm font-medium">{user.first_name} {user.last_name}</span>
                     <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-700">
                         Logout
                     </button>
