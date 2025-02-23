@@ -3,6 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { toast } from "react-hot-toast";
 
 const API_URL = process.env.REACT_APP_API_URL;
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function GoogleLogin() {
     const [user, setUser] = useState(null);
@@ -15,40 +16,22 @@ function GoogleLogin() {
             try {
                 setUser(JSON.parse(storedUser));
             } catch (error) {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user');
+                localStorage.removeItem("access_token");
+                localStorage.removeItem("user");
             }
         }
 
-        const script = document.createElement('script');
-        script.src = "https://accounts.google.com/gsi/client";
-        script.async = true;
-        script.defer = true;
-        script.crossOrigin = "anonymous";
-        document.body.appendChild(script);
-
-        window.onload = () => {
-            window.google.accounts.id.initialize({
-                client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-                callback: handleCredentialResponse
-            });
-            window.google.accounts.id.renderButton(
-                document.getElementById("google-login-button"),
-                {
-                    theme: "outline",
-                    size: "large",
-                    text: "continue_with",
-                    shape: "rectangular",
-                }
-            )
+        // Ensure script isn't added multiple times
+        if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+            const script = document.createElement("script");
+            script.src = "https://accounts.google.com/gsi/client";
+            script.async = true;
+            script.defer = true;
+            document.body.appendChild(script);
         }
+    }, []);
 
-        return () => {
-            document.body.removeChild(script);
-        }
-    }, [])
-
-    const handleCredentialResponse = async (response) => {
+    window.handleCredentialResponse = async (response) => {
         try {
             if (!response.credential) {
                 toast.error("Google login failed");
@@ -57,27 +40,24 @@ function GoogleLogin() {
 
             const decodedToken = jwtDecode(response.credential);
 
-            // create user in database
             const backendResponse = await fetch(`${API_URL}/api/users/google-login/`, {
                 method: "POST",
                 headers: {
-                    "Contect-Type": "application/json",
+                    "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
-                body: JSON.stringify({
-                    token: response.credential,
-                })
+                body: JSON.stringify({ token: response.credential }),
             });
 
             if (!backendResponse.ok) {
                 toast.error("Google login failed");
+                return;
             }
 
             const data = await backendResponse.json();
 
             localStorage.setItem("access_token", data.access || data.token);
             localStorage.setItem("user", JSON.stringify(data.user || data));
-
             setUser(data.user || data);
 
             toast.success("Google login successful");
@@ -92,29 +72,38 @@ function GoogleLogin() {
         localStorage.removeItem("user");
         setUser(null);
         toast.success("Logged out successfully");
-    }
+    };
 
-    const renderAuthContect = () => {
-        if (user) {
-            return (
+    return (
+        <div className="auth-container">
+            {user ? (
                 <div className="flex items-center space-x-2">
                     <img src={user.picture || user.avatar} alt="Profile" className="w-8 h-8 rounded-full" />
                     <span className="text-sm font-medium">{user.name}</span>
-                    <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-700">Logout</button>
+                    <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-700">
+                        Logout
+                    </button>
                 </div>
-            )
-        }
-
-        return (
-            <div id="google-login-button"></div>
-        )
-    }
-
-    return (
-        <div>
-            {renderAuthContect()}
+            ) : (
+                <>
+                    <div 
+                        id="g_id_onload"
+                        data-client_id={GOOGLE_CLIENT_ID}
+                        data-context="signin"
+                        data-ux_mode="popup"
+                        data-callback="handleCredentialResponse"
+                    ></div>
+                    <div 
+                        className="g_id_signin" 
+                        data-type="icon"
+                        data-shape="circle"
+                        data-theme="filled_black"
+                        data-size="large"
+                    ></div>
+                </>
+            )}
         </div>
-    )
-};
+    );
+}
 
 export default GoogleLogin;
