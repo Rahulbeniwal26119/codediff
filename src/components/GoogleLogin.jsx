@@ -46,33 +46,51 @@ function GoogleLogin() {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
-                body: JSON.stringify({ token: response.credential }),
+                body: JSON.stringify({ 
+                    token: response.credential 
+                })
             });
 
             if (!backendResponse.ok) {
-                toast.error("Google login failed");
-                return;
+                throw new Error("Authentication failed");
             }
 
-            var data = await backendResponse.json();
-            console.log(data);
+            const data = await backendResponse.json();
+            
+            // Store auth data
+            localStorage.setItem("access_token", data.data.access); // Updated to match response structure
+            localStorage.setItem("refresh_token", data.data.refresh); // Updated to match response structure
+            localStorage.setItem("user", JSON.stringify({
+                email: data.data.user.email,
+                image: data.data.user.image,
+                first_name: data.data.user.first_name,
+                last_name: data.data.user.last_name,
+            }));
 
-            localStorage.setItem("access_token", data.access || data.token);
-            localStorage.setItem("user", JSON.stringify(data.user || data));
-            setUser(data.user || data);
+            // Update user state
+            setUser({
+                email: data.data.user.email,
+                image: data.data.user.image,
+                first_name: data.data.user.first_name,
+                last_name: data.data.user.last_name,
+            });
 
-            toast.success("Google login successful");
+            toast.success("Successfully logged in");
         } catch (error) {
-            console.error("Google login error:", error);
-            toast.error("Google login failed");
+            console.error("Authentication error:", error);
+            toast.error("Login failed");
         }
     };
 
     const handleLogout = () => {
+        // Clear local storage
         localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");
+
+        // Clear user state
         setUser(null);
-        toast.success("Logged out successfully");
+
         window.location.reload();
     };
 
