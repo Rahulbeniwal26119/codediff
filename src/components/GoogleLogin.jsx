@@ -55,6 +55,7 @@ function GoogleLogin() {
             }
 
             const data = await backendResponse.json();
+            data = data.data;
 
             localStorage.setItem("access_token", data.access || data.token);
             localStorage.setItem("user", JSON.stringify(data.user || data));
@@ -72,6 +73,7 @@ function GoogleLogin() {
         localStorage.removeItem("user");
         setUser(null);
         toast.success("Logged out successfully");
+        window.location.reload();
     };
 
     return (
