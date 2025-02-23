@@ -1,7 +1,7 @@
 import { Toaster } from 'react-hot-toast';
 import React, { useState } from 'react';
 import './App.css';
-import Controls from './components/Controls';
+import Header from './components/Header';
 import CodeEditor from './components/CodeEditor';
 
 function App() {
@@ -72,52 +72,21 @@ function App() {
           </div> */}
 
           <div className={`main-content ${isDarkTheme ? 'dark' : 'light'}`}>
-            <div className="header-controls">
-              <div className="language-selector">
-                <label>Language:</label>
-                <select
-                  value={selectedLanguage}
-                  onChange={handleLanguageChange}
-                  className="bg-[#3c3c3c] border border-[#404040] rounded px-2 py-1 text-sm"
-                >
-                  {supportedLanguages.map(lang => (
-                    <option key={lang.id} value={lang.name}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="file-controls">
-                <div className="file-upload">
-                  <label>Left File:</label>
-                  <input
-                    type="file"
-                    onChange={handleFileUpload('left')}
-                    accept=".txt,.js,.jsx,.ts,.tsx,.json,.html,.css,.py,.java"
-                  />
-                </div>
-                <div className="file-upload">
-                  <label>Right File:</label>
-                  <input
-                    type="file"
-                    onChange={handleFileUpload('right')}
-                    accept=".txt,.js,.jsx,.ts,.tsx,.json,.html,.css,.py,.java"
-                  />
-                </div>
-              </div>
-              <Controls 
-                isDarkTheme={isDarkTheme} 
-                setIsDarkTheme={setIsDarkTheme} 
-                leftContent={leftContent} 
-                rightContent={rightContent} 
-                selectedLanguage={selectedLanguage} 
-                setLeftContent={setLeftContent} 
-                setRightContent={setRightContent} 
-                setSelectedLanguage={setSelectedLanguage}
-                setShowUpdateButton={setShowUpdateButton}
-                showUpdateButton={showUpdateButton}
-              />
-            </div>
+            <Header
+              isDarkTheme={isDarkTheme}
+              setIsDarkTheme={setIsDarkTheme}
+              leftContent={leftContent}
+              rightContent={rightContent}
+              selectedLanguage={selectedLanguage}
+              setShowUpdateButton={setShowUpdateButton}
+              showUpdateButton={showUpdateButton}
+              handleLanguageChange={handleLanguageChange}
+              handleFileUpload={handleFileUpload}
+              supportedLanguages={supportedLanguages}
+              setLeftContent={setLeftContent}
+              setRightContent={setRightContent}
+              setSelectedLanguage={setSelectedLanguage}
+            />
 
             <CodeEditor 
               isDarkTheme={isDarkTheme} 
@@ -130,6 +99,8 @@ function App() {
               setShowUpdateButton={setShowUpdateButton}
             />
           </div>
+
+          
 
           {/* <div className="ad-container ad-right">
             <div className="ad-placeholder">Ad Space</div>
