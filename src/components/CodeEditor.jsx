@@ -5,7 +5,16 @@ import { toast } from 'react-hot-toast';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export default function CodeEditor({isDarkTheme, leftContent, rightContent, selectedLanguage, setLeftContent, setRightContent, setSelectedLanguage }) {
+export default function CodeEditor({
+    isDarkTheme,
+    leftContent,
+    rightContent,
+    selectedLanguage,
+    setLeftContent,
+    setRightContent,
+    setSelectedLanguage,
+    setShowUpdateButton,
+}) {
     const { diffId } = useParams(); // Extract the diffId from the URL
 
     useEffect(() => {
@@ -16,6 +25,12 @@ export default function CodeEditor({isDarkTheme, leftContent, rightContent, sele
                 if (!response.ok) {
                     if (response.status === 404) {
                         toast.error('Diff not found ');
+                        setTimeout(
+                            () => {
+                                window.location.href = '/';
+                            },
+                            2000
+                        )
                         return;
                     }
                     throw new Error('Failed to fetch data');
@@ -27,6 +42,14 @@ export default function CodeEditor({isDarkTheme, leftContent, rightContent, sele
                 setRightContent(result.data.code_after);
                 setSelectedLanguage(result.data.language);
                 toast.success('Diff loaded successfully');
+                const current_logged_in_user = JSON.parse(localStorage.getItem('user'));
+                if (result.data.email && current_logged_in_user?.user?.email == result.data.email) {
+                    console.log(current_logged_in_user, result.data)
+                    setShowUpdateButton(true);
+                } else {
+                    setShowUpdateButton(false);
+                }
+                console.log(result)
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toast.error('Failed to load diff');

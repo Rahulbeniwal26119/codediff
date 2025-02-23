@@ -20,9 +20,14 @@ function App() {
   ];
 
   const [selectedLanguage, setSelectedLanguage] = useState('JSON');
+  const [showUpdateButton, setShowUpdateButton] = useState(false);
 
   const handleLanguageChange = (e) => {
     setSelectedLanguage(e.target.value);
+  };
+
+  const handleUpdateButtonClick = (value) => {
+    setShowUpdateButton(value);
   };
 
   const [isDarkTheme, setIsDarkTheme] = useState(true);
@@ -100,11 +105,30 @@ function App() {
                   />
                 </div>
               </div>
-              <Controls isDarkTheme={isDarkTheme} setIsDarkTheme={setIsDarkTheme} leftContent={leftContent} rightContent={rightContent} selectedLanguage={selectedLanguage} />
+              <Controls 
+                isDarkTheme={isDarkTheme} 
+                setIsDarkTheme={setIsDarkTheme} 
+                leftContent={leftContent} 
+                rightContent={rightContent} 
+                selectedLanguage={selectedLanguage} 
+                setLeftContent={setLeftContent} 
+                setRightContent={setRightContent} 
+                setSelectedLanguage={setSelectedLanguage}
+                setShowUpdateButton={setShowUpdateButton}
+                showUpdateButton={showUpdateButton}
+              />
             </div>
 
-            <CodeEditor isDarkTheme={isDarkTheme} leftContent={leftContent} rightContent={rightContent} selectedLanguage={selectedLanguage} setLeftContent={setLeftContent} setRightContent={setRightContent} setSelectedLanguage={setSelectedLanguage} />
-
+            <CodeEditor 
+              isDarkTheme={isDarkTheme} 
+              leftContent={leftContent} 
+              rightContent={rightContent} 
+              selectedLanguage={selectedLanguage} 
+              setLeftContent={setLeftContent} 
+              setRightContent={setRightContent} 
+              setSelectedLanguage={setSelectedLanguage}
+              setShowUpdateButton={setShowUpdateButton}
+            />
           </div>
 
           {/* <div className="ad-container ad-right">
