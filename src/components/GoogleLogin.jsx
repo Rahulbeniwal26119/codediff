@@ -54,8 +54,8 @@ function GoogleLogin() {
                 return;
             }
 
-            const data = await backendResponse.json();
-            data = data.data;
+            var data = await backendResponse.json();
+            console.log(data);
 
             localStorage.setItem("access_token", data.access || data.token);
             localStorage.setItem("user", JSON.stringify(data.user || data));
