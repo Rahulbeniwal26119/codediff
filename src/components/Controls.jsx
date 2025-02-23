@@ -50,19 +50,7 @@ export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rig
                     </>
                 )}
             </button>
-            {isLoggedIn ? (
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
-                >
-                    <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center">
-                        <span className="text-xs font-medium">R</span>
-                    </div>
-                    Logout
-                </button>
-            ) : (
-                <GoogleLogin className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border" />
-            )}
+            <GoogleLogin  />
         </div>
     );
 }
