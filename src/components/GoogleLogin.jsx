@@ -113,13 +113,14 @@ function GoogleLogin() {
                         data-ux_mode="popup"
                         data-callback="handleCredentialResponse"
                     ></div>
-                    <div 
-                        className="g_id_signin" 
-                        data-type="icon"
-                        data-shape="circle"
-                        data-theme="filled_black"
-                        data-size="large"
-                    ></div>
+                    <button 
+                        className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24">
+                            {/* Google icon path */}
+                        </svg>
+                        Login
+                    </button>
                 </>
             )}
         </div>
