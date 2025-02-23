@@ -112,16 +112,15 @@ function GoogleLogin() {
                         data-context="signin"
                         data-ux_mode="popup"
                         data-callback="handleCredentialResponse"
-                        data-auto_prompt="false">
-                    </div>
+                        data-auto_prompt="false"
+                    ></div>
                     <div 
-                        className="g_id_signin flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
+                        className="g_id_signin flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border" 
                         data-type="icon"
                         data-shape="circle"
-                        data-theme="outline"
+                        data-theme="filled_black"
                         data-size="small"
-                    >
-                    </div>
+                    ></div>
                 </div>
             )}
         </div>
