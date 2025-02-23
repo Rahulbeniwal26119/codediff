@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { DiffEditor } from '@monaco-editor/react';
 import './App.css';
-
+import GoogleLogin from './components/GoogleLogin';
 const API_URL = process.env.REACT_APP_API_URL;
 
 function App() {
@@ -432,7 +432,7 @@ function App() {
                 </div>
               </div>
               <div className="controls flex items-center gap-2">
-                {/* <button
+                <button
                   className="share-button  inline-flex items-center gap-2 bg-[#252526] hover:bg-[#2d2d2d] border border-[#404040] hover:border-[#565656] rounded-sm px-3 py-1.5 text-sm text-gray-300 hover:text-white transition-all duration-150 ease-in-out focus:outline-none focus:ring-1 focus:ring-[#565656] active:bg-[#313131] display-none"
                   onClick={handleUpdate}
                 >
@@ -453,8 +453,8 @@ function App() {
                     <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"></path>
                     <path d="M3.51 15A9 9 0 0 0 18.36 18.36L23 14"></path>
                   </svg>
-                  Update
-                </button> */}
+                  Update Link
+                </button>
                 <button
                   className="share-button inline-flex items-center gap-2 bg-[#252526] hover:bg-[#2d2d2d] border border-[#404040] hover:border-[#565656] rounded-sm px-3 py-1.5 text-sm text-gray-300 hover:text-white transition-all duration-150 ease-in-out focus:outline-none focus:ring-1 focus:ring-[#565656] active:bg-[#313131]"
                   onClick={handleShare}
@@ -478,6 +478,7 @@ function App() {
                   </svg>
                   Share
                 </button>
+                <GoogleLogin />
                 <button
                   onClick={handleThemeChange}
                   className="toggle-theme-button bg-[#252526] hover:bg-[#2d2d2d]  rounded-sm px-3 py-1.5 text-sm text-gray-300 hover:text-white transition-all duration-150 ease-in-out focus:outline-none focus:ring-1 focus:ring-[#565656]"
