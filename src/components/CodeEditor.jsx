@@ -43,8 +43,7 @@ export default function CodeEditor({
                 setSelectedLanguage(result.data.language);
 
                 toast.success('Diff loaded successfully');
-                const current_logged_in_user = JSON.parse(localStorage.getItem('user'));
-                if (result.data.email && current_logged_in_user?.access_token == result.data.access_token) {
+                if (localStorage?.access_token == result.data.access_token) {
                     setShowUpdateButton(true);
                 } else {
                     setShowUpdateButton(false);

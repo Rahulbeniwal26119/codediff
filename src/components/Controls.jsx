@@ -7,14 +7,6 @@ import UpdateLink from './UpdateLink';
 export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rightContent, selectedLanguage, setShowUpdateButton, showUpdateButton}) {
     const { diffId } = useParams();
     const navigate = useNavigate();
-    const isLoggedIn = !!localStorage.getItem('authToken');
-
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        navigate('/');
-        window.location.reload();
-    };
 
     return (
         <div className="controls flex items-center gap-3 text-gray-200">
