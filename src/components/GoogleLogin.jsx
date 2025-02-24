@@ -46,8 +46,8 @@ function GoogleLogin() {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
-                body: JSON.stringify({ 
-                    token: response.credential 
+                body: JSON.stringify({
+                    token: response.credential
                 })
             });
 
@@ -56,7 +56,7 @@ function GoogleLogin() {
             }
 
             const data = await backendResponse.json();
-            
+
             // Store auth data
             localStorage.setItem("access_token", data.data.access);
             localStorage.setItem("refresh_token", data.data.refresh);
@@ -106,7 +106,7 @@ function GoogleLogin() {
                 </div>
             ) : (
                 <div>
-                    <div 
+                    <div
                         id="g_id_onload"
                         data-client_id={GOOGLE_CLIENT_ID}
                         data-context="signin"
@@ -114,8 +114,8 @@ function GoogleLogin() {
                         data-callback="handleCredentialResponse"
                         data-auto_prompt="false"
                     ></div>
-                    <div 
-                        className="g_id_signin flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border" 
+                    <div
+                        className="g_id_signin flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
                         data-type="icon"
                         data-shape="circle"
                         data-theme="filled_black"

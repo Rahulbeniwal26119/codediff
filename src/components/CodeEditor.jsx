@@ -41,10 +41,10 @@ export default function CodeEditor({
                 setLeftContent(result.data.code_before);
                 setRightContent(result.data.code_after);
                 setSelectedLanguage(result.data.language);
+
                 toast.success('Diff loaded successfully');
                 const current_logged_in_user = JSON.parse(localStorage.getItem('user'));
-                if (result.data.email && current_logged_in_user?.user?.email == result.data.email) {
-                    console.log(current_logged_in_user, result.data)
+                if (result.data.email && current_logged_in_user?.access_token == result.data.access_token) {
                     setShowUpdateButton(true);
                 } else {
                     setShowUpdateButton(false);
