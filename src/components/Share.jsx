@@ -47,6 +47,13 @@ export default function Share({ leftContent, rightContent, selectedLanguage }) {
             }
 
             const data = await response.json();
+            print(data)
+            print(
+                {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                }
+            )
             const uuid = data.data.unique_identifier;
             // take current url and append uuid to it
             const shareUrl = `${window.location.origin}/${uuid}/`;
