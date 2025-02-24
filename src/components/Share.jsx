@@ -4,6 +4,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 export default function Share({ leftContent, rightContent, selectedLanguage }) {
 
     const handleShare = async () => {
+        const accessToken = localStorage.getItem('access_token');
         if (!leftContent || !rightContent) {
             toast.error(
                 'Empty files cannot be shared',
@@ -25,6 +26,7 @@ export default function Share({ leftContent, rightContent, selectedLanguage }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
                 },
                 body: JSON.stringify({
                     code_before: leftContent,
