@@ -47,8 +47,8 @@ export default function Share({ leftContent, rightContent, selectedLanguage }) {
             }
 
             const data = await response.json();
-            print(data)
-            print(
+            console.log(data)
+            console.log(
                 {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`,
