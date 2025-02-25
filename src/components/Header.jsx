@@ -1,11 +1,12 @@
 import Controls from './Controls';
-
+import { useParams } from 'react-router-dom';
 export default function Header({ isDarkTheme, setIsDarkTheme, leftContent, rightContent, selectedLanguage, setShowUpdateButton, showUpdateButton, handleLanguageChange, handleFileUpload, supportedLanguages }) {
+   const {diffId} = useParams();
     return (
         <header className="w-full px-4 py-2 bg-[#1e1e1e] border-b border-[#2d2d2d] shadow-sm relative z-50">
             <div className="flex items-center justify-between">
                 {/* Logo and Language Selector */}
-                <div className="flex items-center gap-4">
+                <div className= "flex items-center gap-6">
                     <div className="flex items-center">
                         <svg className="h-6 w-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M9.5 14.5L12 12l-2.5-2.5M14.5 9.5L12 12l2.5 2.5M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
@@ -15,7 +16,7 @@ export default function Header({ isDarkTheme, setIsDarkTheme, leftContent, right
                         </span>
                     </div>
                     
-                    <div className="language-selector flex items-center gap-2">
+                    <div className="language-selector flex items-center gap-4 ">
                         <select
                             value={selectedLanguage}
                             onChange={handleLanguageChange}
@@ -28,10 +29,7 @@ export default function Header({ isDarkTheme, setIsDarkTheme, leftContent, right
                             ))}
                         </select>
                     </div>
-                </div>
-
-                {/* File Upload Controls */}
-                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 border-l border-[#605d5d] pl-4">
                     <div className="file-upload flex items-center gap-2">
                         <input
                             type="file"
@@ -69,6 +67,10 @@ export default function Header({ isDarkTheme, setIsDarkTheme, leftContent, right
                     </div>
                 </div>
 
+                </div>
+
+                {/* File Upload Controls */}
+               
                 {/* Controls */}
                 <Controls
                     isDarkTheme={isDarkTheme}

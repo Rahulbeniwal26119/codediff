@@ -95,13 +95,27 @@ function GoogleLogin() {
     };
 
     return (
-        <div className="auth-container">
+        <div className="auth-container border-l border-[#605d5d] pl-4">
             {user ? (
                 <div className="flex items-center space-x-2">
-                    <img src={user.image} alt="Profile" className="w-8 h-8 rounded-full" />
-                    <span className="text-sm font-medium">{user.first_name} {user.last_name}</span>
+
+
                     <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border">
-                        Logout
+                        <img src={user.image} alt="Profile" className="w-6 h-6 rounded-full" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M10 17l5-5-5-5v4H3v2h7v4z" />
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        </svg>
                     </button>
                 </div>
             ) : (
