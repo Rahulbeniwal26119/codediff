@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import GoogleLogin from './GoogleLogin';
 import Share from './Share';
 import UpdateLink from './UpdateLink';
+import ManageLinks from './ManageLinks';
 
 export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rightContent, selectedLanguage, setShowUpdateButton, showUpdateButton}) {
     const { diffId } = useParams();
@@ -22,10 +23,10 @@ export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rig
                 rightContent={rightContent} 
                 selectedLanguage={selectedLanguage} 
             />
-          
-            <GoogleLogin  
             
-            />
+            <ManageLinks />
+          
+            <GoogleLogin />
         </div>
     );
 }

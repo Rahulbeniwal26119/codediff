@@ -95,7 +95,7 @@ function GoogleLogin() {
     };
 
     return (
-        <div className="auth-container border-l border-[#605d5d] pl-4">
+        <div className="auth-container border-l border-[#545252] pl-4">
             {user ? (
                 <div className="flex items-center space-x-2">
 

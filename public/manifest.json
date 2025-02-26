@@ -1,6 +1,6 @@
 {
-  "short_name": "Code Diff",
-  "name": "Code Diff",
+  "short_name": "CodeDiff",
+  "name": "CodeDiff Comparison Tool",
   "icons": [
     {
       "src": "favicon.ico",

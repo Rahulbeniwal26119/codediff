@@ -7,12 +7,10 @@ export default function Header({ isDarkTheme, setIsDarkTheme, leftContent, right
             <div className="flex items-center justify-between">
                 {/* Logo and Language Selector */}
                 <div className= "flex items-center gap-6">
-                    <div className="flex items-center">
-                        <svg className="h-6 w-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9.5 14.5L12 12l-2.5-2.5M14.5 9.5L12 12l2.5 2.5M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
-                        </svg>
-                        <span className="ml-2 font-semibold text-gray-200">
-                            CodeDiff
+                    <div className="flex items-center border-gray-600 border-2 rounded-full p-1 hover:bg-[#3d3d3d]">
+                       
+                        <span className="mx-2 font-semibold text-gray-200">
+                            {`{ CodeDiff }`}
                         </span>
                     </div>
                     
