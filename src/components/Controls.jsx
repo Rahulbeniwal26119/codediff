@@ -5,13 +5,16 @@ import Share from './Share';
 import UpdateLink from './UpdateLink';
 import ManageLinks from './ManageLinks';
 
+const isLoggedIn = !!localStorage.getItem('access_token');
+
+
 export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rightContent, selectedLanguage, setShowUpdateButton, showUpdateButton}) {
     const { diffId } = useParams();
     const navigate = useNavigate();
 
     return (
         <div className="controls flex items-center gap-3 text-gray-200">
-            {diffId &&  (
+            {diffId &&  showUpdateButton (
                 <UpdateLink 
                     leftContent={leftContent} 
                     rightContent={rightContent} 
@@ -23,10 +26,9 @@ export default function Controls({ isDarkTheme, setIsDarkTheme, leftContent, rig
                 rightContent={rightContent} 
                 selectedLanguage={selectedLanguage} 
             />
-            
-            <ManageLinks />
-          
+            { isLoggedIn && <ManageLinks />}
             <GoogleLogin />
         </div>
     );
 }
+
