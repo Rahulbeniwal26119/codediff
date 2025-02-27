@@ -1,51 +1,213 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import {
+    createColumnHelper,
+    flexRender,
+    getCoreRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from '@tanstack/react-table';
+import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+
+const BASE_URL = process.env.REACT_APP_API_URL;
 
 export default function ManageLinksModal({ onClose }) {
     const [diffs, setDiffs] = useState([]);
-    const [filteredDiffs, setFilteredDiffs] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [diffToDelete, setDiffToDelete] = useState(null);
-    
+    const [totalCount, setTotalCount] = useState(0);
+    const [nextPage, setNextPage] = useState(null);
+    const [prevPage, setPrevPage] = useState(null);
+    const [sorting, setSorting] = useState([]);
+
     const itemsPerPage = 10;
 
-    useEffect(() => {
-        // Mock data
-        const mockDiffs = [
-            { id: 'abc123', createdOn: '2023-07-12T14:30:00Z', lastUpdated: '2023-07-12T15:45:00Z', info: 'JavaScript comparison' },
-            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },            { id: 'def456', createdOn: '2023-07-11T10:20:00Z', lastUpdated: '2023-07-11T11:15:00Z', info: 'Python code review' },
-            // Add more mock data as needed
-        ];
-        
-        setDiffs(mockDiffs);
-        setFilteredDiffs(mockDiffs);
-        setIsLoading(false);
-    }, []);
+    const columnHelper = createColumnHelper();
+
+    const get_link = (id) => {
+        // take abs page url and replace the id with the id
+        const url = `${id}`;
+        return <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400">
+            {id}
+        </a>
+    }
+
+    const columns = useMemo(
+        () => [
+            columnHelper.accessor('id', {
+                header: 'Diff',
+                cell: info => get_link(info.getValue()),
+            }),
+            columnHelper.accessor('createdOn', {
+                header: 'Created On',
+                cell: info => formatDate(info.getValue()),
+                sortingFn: 'datetime',
+            }),
+            columnHelper.accessor('lastUpdated', {
+                header: 'Last Updated',
+                cell: info => formatDate(info.getValue()),
+                sortingFn: 'datetime',
+            }),
+            columnHelper.accessor('info', {
+                header: 'Diff Info',
+                cell: info => info.getValue(),
+            }),
+            columnHelper.accessor('is_active', {
+                header: 'Status',
+                cell: info => (
+                    <button
+                        onClick={() => handleToggleActive(info.row.original)}
+                        className={`px-2 py-1 rounded-full text-xs ${
+                            info.getValue()
+                                ? 'bg-green-500/20 text-green-500'
+                                : 'bg-red-500/20 text-red-500'
+                        }`}
+                    >
+                        {info.getValue() ? 'Active' : 'Inactive'}
+                    </button>
+                ),
+            }),
+            columnHelper.accessor('id', {
+                id: 'actions',
+                header: 'Action',
+                cell: info => (
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => confirmDelete(info.row.original)}
+                            className="text-red-500 hover:text-red-400"
+                            title="Delete diff"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                ),
+            }),
+        ],
+        []
+    );
+
+    const table = useReactTable({
+        data: diffs,
+        columns,
+        state: {
+            sorting,
+        },
+        onSortingChange: setSorting,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+    });
+
+    const fetchDiffs = async (page = 1) => {
+        try {
+            const access_token = localStorage.getItem('access_token');
+            const response = await fetch(
+                `${BASE_URL}/api/code-diff/?page=${page}&q=${searchTerm}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+            if (response.ok) {
+                setTotalCount(data.count);
+                setNextPage(data.next);
+                setPrevPage(data.previous);
+                
+                if (data.results.length === 0) {
+                    setIsLoading(false);
+                    return [];
+                }
+                
+                return data.results.map(diff => ({
+                    id: diff.unique_identifier,
+                    createdOn: diff.created_at,
+                    lastUpdated: diff.updated_at,
+                    info: `${diff.language} Comparison`,
+                    is_active: diff.is_active,
+                    unique_identifier: diff.unique_identifier,
+                    delete_link: `${BASE_URL}/api/code-diff/${diff.unique_identifier}/`,
+                }));
+            } else {
+                console.error('Error fetching diffs:', data.detail);
+                setIsLoading(false);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching diffs:', error);
+            setIsLoading(false);
+            return [];
+        }
+    };
+
+    const handleDelete = async (id, deleteLink) => {
+        try {
+            const access_token = localStorage.getItem('access_token');
+            const response = await fetch(deleteLink, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+
+            if (response.ok) {
+                // Refresh the current page
+                const result = await fetchDiffs(currentPage);
+                setDiffs(result);
+                setDiffToDelete(null);
+            } else {
+                console.error('Error deleting diff');
+            }
+        } catch (error) {
+            console.error('Error deleting diff:', error);
+        }
+    };
+
+    const handleToggleActive = async (diff) => {
+        try {
+            const access_token = localStorage.getItem('access_token');
+            const response = await fetch(
+                `${BASE_URL}/api/code-diff/${diff.unique_identifier}/toggle-diff/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (response.ok) {
+                // Refresh the current page to get updated data
+                const result = await fetchDiffs(currentPage);
+                setDiffs(result);
+            } else {
+                console.error('Error toggling diff status');
+            }
+        } catch (error) {
+            console.error('Error toggling diff status:', error);
+        }
+    };
 
     useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredDiffs(diffs);
-        } else {
-            const filtered = diffs.filter(diff => 
-                diff.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                diff.info.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setFilteredDiffs(filtered);
-        }
-        setCurrentPage(1);
-    }, [searchTerm, diffs]);
+        const loadDiffs = async () => {
+            const result = await fetchDiffs(currentPage);
+            setDiffs(result);
+            setIsLoading(false);
+        };
+
+        loadDiffs();
+    }, [currentPage, searchTerm]);
 
     const confirmDelete = (id) => {
         setDiffToDelete(id);
     };
 
     const cancelDelete = () => {
-        setDiffToDelete(null);
-    };
-
-    const deleteDiff = () => {
-        setDiffs(diffs.filter(diff => diff.id !== diffToDelete));
         setDiffToDelete(null);
     };
 
@@ -59,12 +221,6 @@ export default function ManageLinksModal({ onClose }) {
         
         return `${day}/${month}/${year}, ${hours}:${minutes}:00`;
     };
-
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredDiffs.length / itemsPerPage);
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredDiffs.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -81,7 +237,7 @@ export default function ManageLinksModal({ onClose }) {
                         </svg>
                     </button>
                 </div>
-                
+
                 {/* Search */}
                 <div className="p-4 bg-[#262626]">
                     <input
@@ -92,76 +248,97 @@ export default function ManageLinksModal({ onClose }) {
                         className="w-full p-2 rounded bg-[#404040] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-                
+
                 {/* Table */}
                 <div className="overflow-auto flex-grow">
                     {isLoading ? (
                         <div className="p-4 text-center">Loading...</div>
-                    ) : filteredDiffs.length === 0 ? (
+                    ) : diffs.length === 0 ? (
                         <div className="p-4 text-center">No diffs found</div>
                     ) : (
                         <table className="min-w-full">
                             <thead className="bg-[#262626] text-xs uppercase">
-                                <tr>
-                                    <th className="px-4 py-3 text-left">Diff ID</th>
-                                    <th className="px-4 py-3 text-left">Created On</th>
-                                    <th className="px-4 py-3 text-left">Last Updated</th>
-                                    <th className="px-4 py-3 text-left">Diff Info</th>
-                                    <th className="px-4 py-3 text-left">Action</th>
-                                </tr>
+                                {table.getHeaderGroups().map(headerGroup => (
+                                    <tr key={headerGroup.id}>
+                                        {headerGroup.headers.map(header => (
+                                            <th 
+                                                key={header.id}
+                                                className="px-4 py-3 text-left"
+                                            >
+                                                {header.isPlaceholder ? null : (
+                                                    <div
+                                                        {...{
+                                                            className: header.column.getCanSort()
+                                                                ? 'cursor-pointer select-none flex items-center gap-2'
+                                                                : '',
+                                                            onClick: header.column.getToggleSortingHandler(),
+                                                        }}
+                                                    >
+                                                        {flexRender(
+                                                            header.column.columnDef.header,
+                                                            header.getContext()
+                                                        )}
+                                                        {{
+                                                            asc: <FaSortUp />,
+                                                            desc: <FaSortDown />,
+                                                            false: <FaSort className="text-gray-400" />,
+                                                        }[header.column.getIsSorted()] ?? null}
+                                                    </div>
+                                                )}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                ))}
                             </thead>
                             <tbody>
-                                {currentItems.map((diff) => (
-                                    <tr key={diff.id} className="border-t border-[#404040] hover:bg-[#404040]">
-                                        <td className="px-4 py-3 text-sm">{diff.id}</td>
-                                        <td className="px-4 py-3 text-sm">{formatDate(diff.createdOn)}</td>
-                                        <td className="px-4 py-3 text-sm">{formatDate(diff.lastUpdated)}</td>
-                                        <td className="px-4 py-3 text-sm">{diff.info}</td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <button 
-                                                onClick={() => confirmDelete(diff.id)}
-                                                className="text-red-500 hover:text-red-400"
-                                                title="Delete diff"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                            </button>
-                                        </td>
+                                {table.getRowModel().rows.map(row => (
+                                    <tr key={row.id} className="border-t border-[#404040] hover:bg-[#404040]">
+                                        {row.getVisibleCells().map(cell => (
+                                            <td key={cell.id} className="px-4 py-3 text-sm">
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </td>
+                                        ))}
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     )}
                 </div>
-                
+
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {totalCount > itemsPerPage && (
                     <div className="flex justify-between items-center p-4 bg-[#262626] border-t border-[#404040]">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className={`px-4 py-2 rounded ${currentPage === 1 
-                                ? 'bg-[#3c4657] text-gray-500 cursor-not-allowed' 
-                                : 'bg-[#3c4657] text-white hover:bg-opacity-80'}`}
+                            disabled={!prevPage}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 ${
+                                !prevPage 
+                                    ? 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border cursor-not-allowed'
+                                    : 'bg-[#5131cf] text-gray-200 border-gray-600 hover: border'
+                            }`}
                         >
                             Previous
                         </button>
                         <span className="text-gray-400">
-                            Page {currentPage} of {totalPages}
+                            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage)}
                         </span>
                         <button 
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className={`px-4 py-2 rounded ${currentPage === totalPages 
-                                ? 'bg-[#3c4657] text-gray-500 cursor-not-allowed' 
-                                : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={!nextPage}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 ${
+                                !nextPage 
+                                    ? 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border cursor-not-allowed'
+                                    : 'bg-[#5131cf] text-gray-200 border-gray-600 hover: border'
+                            }`}
                         >
                             Next
                         </button>
                     </div>
                 )}
-                
+
                 {/* Delete Confirmation Dialog */}
                 {diffToDelete && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -176,7 +353,7 @@ export default function ManageLinksModal({ onClose }) {
                                     Cancel
                                 </button>
                                 <button 
-                                    onClick={deleteDiff}
+                                    onClick={() => handleDelete(diffToDelete.id, diffToDelete.delete_link)}
                                     className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white"
                                 >
                                     Delete

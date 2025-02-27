@@ -8,7 +8,8 @@ export default function ManageLinks() {
         <>
             <button 
                 onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 py-1.5 px-3 rounded hover:bg-gray-700"
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
+        
                 title="Manage Links"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
