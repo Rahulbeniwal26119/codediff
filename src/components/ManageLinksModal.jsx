@@ -8,6 +8,23 @@ import {
 } from '@tanstack/react-table';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
+// Debounce Hook
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
+
 const BASE_URL = process.env.REACT_APP_API_URL;
 
 export default function ManageLinksModal({ onClose }) {
@@ -22,6 +39,9 @@ export default function ManageLinksModal({ onClose }) {
     const [sorting, setSorting] = useState([]);
 
     const itemsPerPage = 10;
+
+    // Debounced search term
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const columnHelper = createColumnHelper();
 
@@ -104,7 +124,7 @@ export default function ManageLinksModal({ onClose }) {
         try {
             const access_token = localStorage.getItem('access_token');
             const response = await fetch(
-                `${BASE_URL}/api/code-diff/?page=${page}&q=${searchTerm}`,
+                `${BASE_URL}/api/code-diff/?page=${page}&q=${debouncedSearchTerm}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${access_token}`
@@ -201,7 +221,7 @@ export default function ManageLinksModal({ onClose }) {
         };
 
         loadDiffs();
-    }, [currentPage, searchTerm]);
+    }, [currentPage, debouncedSearchTerm]);
 
     const confirmDelete = (id) => {
         setDiffToDelete(id);
