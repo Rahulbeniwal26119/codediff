@@ -26,6 +26,7 @@ function useDebounce(value, delay) {
 }
 
 const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL_FRONTEND = process.env.REACT_APP_BASE_URL;
 
 export default function ManageLinksModal({ onClose }) {
     const [diffs, setDiffs] = useState([]);
@@ -47,7 +48,7 @@ export default function ManageLinksModal({ onClose }) {
 
     const get_link = (id) => {
         // take abs page url and replace the id with the id
-        const url = `${id}`;
+        const url = `${BASE_URL_FRONTEND}/${id}`;
         return <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400">
             {id}
         </a>
@@ -132,6 +133,7 @@ export default function ManageLinksModal({ onClose }) {
                 }
             );
 
+        
             const data = await response.json();
             if (response.ok) {
                 setTotalCount(data.count);
@@ -154,6 +156,8 @@ export default function ManageLinksModal({ onClose }) {
                 }));
             } else {
                 console.error('Error fetching diffs:', data.detail);
+                // raise the error
+                throw new Error(data.detail);
                 setIsLoading(false);
                 return [];
             }

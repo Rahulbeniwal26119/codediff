@@ -38,8 +38,6 @@ function GoogleLogin() {
                 return;
             }
 
-            const decodedToken = jwtDecode(response.credential);
-
             const backendResponse = await fetch(`${API_URL}/api/users/google-login/`, {
                 method: "POST",
                 headers: {
@@ -76,6 +74,7 @@ function GoogleLogin() {
             });
 
             toast.success("Successfully logged in");
+            window.location.reload();
         } catch (error) {
             console.error("Authentication error:", error);
             toast.error("Login failed");
@@ -83,7 +82,6 @@ function GoogleLogin() {
     };
 
     const handleLogout = () => {
-        // Clear local storage
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");

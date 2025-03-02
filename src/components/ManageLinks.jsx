@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import ManageLinksModal from './ManageLinksModal';
 
-export default function ManageLinks() {
+export default function ManageLinks({ disabled }) {
     const [showModal, setShowModal] = useState(false);
+
+    const handleClick = () => {
+        setShowModal(true);
+    };
 
     return (
         <>
             <button 
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
-        
-                title="Manage Links"
+                onClick={handleClick} 
+                disabled={disabled}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 ${
+                    disabled 
+                        ? 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border'
+                        : 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover: border'
+                }`}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                 </svg>
-                <span>Manage Links</span>
+                Manage
             </button>
             
             {showModal && <ManageLinksModal onClose={() => setShowModal(false)} />}

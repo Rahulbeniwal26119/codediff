@@ -43,12 +43,11 @@ export default function CodeEditor({
                 setSelectedLanguage(result.data.language);
 
                 toast.success('Diff loaded successfully');
-                if (localStorage?.access_token == result.data.access_token) {
+                if (localStorage?.access_token && result.data.access_token && localStorage?.access_token == result.data.access_token) {
                     setShowUpdateButton(true);
                 } else {
                     setShowUpdateButton(false);
                 }
-                console.log(result)
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toast.error('Failed to load diff');
