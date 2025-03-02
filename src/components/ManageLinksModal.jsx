@@ -3,10 +3,8 @@ import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
-    getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 // Debounce Hook
 function useDebounce(value, delay) {
@@ -37,17 +35,12 @@ export default function ManageLinksModal({ onClose }) {
     const [totalCount, setTotalCount] = useState(0);
     const [nextPage, setNextPage] = useState(null);
     const [prevPage, setPrevPage] = useState(null);
-    const [sorting, setSorting] = useState([]);
 
     const itemsPerPage = 10;
-
-    // Debounced search term
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
     const columnHelper = createColumnHelper();
 
     const get_link = (id) => {
-        // take abs page url and replace the id with the id
         const url = `${BASE_URL_FRONTEND}/${id}`;
         return <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400">
             {id}
@@ -63,12 +56,10 @@ export default function ManageLinksModal({ onClose }) {
             columnHelper.accessor('createdOn', {
                 header: 'Created On',
                 cell: info => formatDate(info.getValue()),
-                sortingFn: 'datetime',
             }),
             columnHelper.accessor('lastUpdated', {
                 header: 'Last Updated',
                 cell: info => formatDate(info.getValue()),
-                sortingFn: 'datetime',
             }),
             columnHelper.accessor('info', {
                 header: 'Diff Info',
@@ -113,12 +104,7 @@ export default function ManageLinksModal({ onClose }) {
     const table = useReactTable({
         data: diffs,
         columns,
-        state: {
-            sorting,
-        },
-        onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
     });
 
     const fetchDiffs = async (page = 1) => {
@@ -302,11 +288,6 @@ export default function ManageLinksModal({ onClose }) {
                                                             header.column.columnDef.header,
                                                             header.getContext()
                                                         )}
-                                                        {{
-                                                            asc: <FaSortUp />,
-                                                            desc: <FaSortDown />,
-                                                            false: <FaSort className="text-gray-400" />,
-                                                        }[header.column.getIsSorted()] ?? null}
                                                     </div>
                                                 )}
                                             </th>

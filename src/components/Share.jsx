@@ -1,7 +1,10 @@
 import { toast } from 'react-hot-toast';
+import { useCode } from '../context/CodeContext';
+
 const API_URL = process.env.REACT_APP_API_URL;
 
-export default function Share({ leftContent, rightContent, selectedLanguage }) {
+export default function Share() {
+    const { leftContent, rightContent, selectedLanguage } = useCode();
 
     const handleShare = async () => {
         const accessToken = localStorage.getItem('access_token');
@@ -60,7 +63,7 @@ export default function Share({ leftContent, rightContent, selectedLanguage }) {
 
             toast.custom((t) => (
                 <div className={`${t.visible ? 'animate-enter' : 'animate-leave'
-                    } max-w-md w-full bg-[#333] shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+                    } max-w-xl w-full bg-[#333] shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
                 >
                     <div className="flex-1 w-0 p-4">
                         <div className="flex items-center">

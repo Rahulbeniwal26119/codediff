@@ -1,18 +1,21 @@
 import Controls from './Controls';
 import { useParams } from 'react-router-dom';
-export default function Header({
-    isDarkTheme,
-    setIsDarkTheme,
-    leftContent,
-    rightContent,
-    selectedLanguage,
-    setShowUpdateButton,
-    showUpdateButton,
-    handleLanguageChange,
-    handleFileUpload,
-    supportedLanguages
-}) {
+import { useCode } from '../context/CodeContext';
+
+export default function Header() {
+    const {
+        isDarkTheme,
+        setIsDarkTheme,
+        selectedLanguage,
+        handleLanguageChange,
+        handleFileUpload,
+        supportedLanguages,
+        isSideBySide,
+        setIsSideBySide
+    } = useCode();
+
     const { diffId } = useParams();
+
     return (
         <header className="w-full px-4 py-2 bg-[#1e1e1e] border-b border-[#2d2d2d] shadow-sm relative z-50">
             <div className="flex items-center justify-between">
@@ -38,8 +41,20 @@ export default function Header({
                             ))}
                         </select>
                     </div>
-                    <div className="flex items-center gap-4 border-l border-[#605d5d] pl-4">
+                    <div className="flex items-center justify-center gap-4 border-l border-[#605d5d] pl-4">
                         <div className="file-upload flex items-center gap-2">
+                            {/* Toggle Side-by-Side View Button */}
+                            <button
+                                onClick={() => setIsSideBySide(!isSideBySide)}
+                                className="px-4 py-1.5 rounded-full text-sm cursor-pointer transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3h6m-6 18h6M3 12h18" />
+                                </svg>
+                                {isSideBySide ? 'Inline View' : 'Side by Side'}
+                            </button>
+
+                            {/* Existing Left File Input */}
                             <input
                                 type="file"
                                 onChange={(e) => handleFileUpload('left')(e)}
@@ -84,11 +99,12 @@ export default function Header({
                 <Controls
                     isDarkTheme={isDarkTheme}
                     setIsDarkTheme={setIsDarkTheme}
-                    leftContent={leftContent}
-                    rightContent={rightContent}
                     selectedLanguage={selectedLanguage}
-                    setShowUpdateButton={setShowUpdateButton}
-                    showUpdateButton={showUpdateButton}
+                    handleLanguageChange={handleLanguageChange}
+                    handleFileUpload={handleFileUpload}
+                    supportedLanguages={supportedLanguages}
+                    isSideBySide={isSideBySide}
+                    setIsSideBySide={setIsSideBySide}
                 />
             </div>
         </header>

@@ -2,20 +2,24 @@ import { DiffEditor } from '@monaco-editor/react';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useCode } from '../context/CodeContext';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export default function CodeEditor({
-    isDarkTheme,
-    leftContent,
-    rightContent,
-    selectedLanguage,
-    setLeftContent,
-    setRightContent,
-    setSelectedLanguage,
-    setShowUpdateButton,
-}) {
-    const { diffId } = useParams(); // Extract the diffId from the URL
+export default function CodeEditor() {
+    const {
+        isDarkTheme,
+        leftContent,
+        rightContent,
+        selectedLanguage,
+        setLeftContent,
+        setRightContent,
+        setSelectedLanguage,
+        setShowUpdateButton,
+        isSideBySide
+    } = useCode();
+
+    const { diffId } = useParams();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -101,6 +105,7 @@ export default function CodeEditor({
         colorDecorators: true,
         originalEditable: true,
         modifiedEditable: true,
+        renderSideBySide: isSideBySide
     };
 
     return (

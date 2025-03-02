@@ -1,9 +1,11 @@
 import { toast } from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
+import { useCode } from '../context/CodeContext';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export default function UpdateLink({ leftContent, rightContent, selectedLanguage, disabled }) {
+export default function UpdateLink() {
+    const { leftContent, rightContent, selectedLanguage, disabled } = useCode();
     const { diffId } = useParams();
 
     const handleUpdate = async ({ leftContent, rightContent, selectedLanguage }) => {
