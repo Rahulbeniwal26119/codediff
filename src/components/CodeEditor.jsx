@@ -47,7 +47,7 @@ export default function CodeEditor() {
                 setSelectedLanguage(result.data.language);
 
                 toast.success('Diff loaded successfully');
-                if (localStorage?.access_token && result.data.access_token && localStorage?.access_token == result.data.access_token) {
+                if (localStorage?.access_token && result.data.access_token && localStorage?.access_token === result.data.access_token) {
                     setShowUpdateButton(true);
                 } else {
                     setShowUpdateButton(false);
@@ -61,7 +61,7 @@ export default function CodeEditor() {
         if (diffId) {
             fetchData();
         }
-    }, [diffId]);
+    }, [diffId, setLeftContent, setRightContent, setSelectedLanguage, setShowUpdateButton]);
 
     // const handleFormatClick = (side) => {
     //     try {
@@ -74,8 +74,9 @@ export default function CodeEditor() {
     // };
 
     const editorOptions = {
-        minimap: { enabled: true },
-        fontSize: 20,
+        minimap: { enabled: true, scale: 1 },
+        fontSize: 16,
+        lineHeight: 24,
         lineNumbers: 'on',
         folding: true,
         renderIndentGuides: true,
@@ -85,7 +86,7 @@ export default function CodeEditor() {
         automaticLayout: true,
         scrollBeyondLastLine: false,
         wordWrap: 'on',
-        padding: { top: 10 },
+        padding: { top: 16, bottom: 16 },
         suggest: {
             snippets: 'on',
         },
@@ -99,24 +100,33 @@ export default function CodeEditor() {
         quickSuggestions: true,
         scrollbar: {
             vertical: 'visible',
-            horizontal: 'visible'
+            horizontal: 'visible',
+            verticalScrollbarSize: 12,
+            horizontalScrollbarSize: 12,
         },
         renderValidationDecorations: 'on',
         colorDecorators: true,
         originalEditable: true,
         modifiedEditable: true,
-        renderSideBySide: isSideBySide
+        renderSideBySide: isSideBySide,
+        ignoreTrimWhitespace: false,
+        renderOverviewRuler: true,
+        diffWordWrap: 'on',
+        enableSplitViewResizing: true,
     };
 
     return (
-        <div className="diff-section">
+        <div className="h-full w-full flex flex-col">
             <DiffEditor
+                height="100%"
                 original={leftContent}
                 modified={rightContent}
                 language={selectedLanguage.toLowerCase()}
                 theme={isDarkTheme ? 'vs-dark' : 'vs-light'}
                 options={editorOptions}
+                loading={<div className="flex items-center justify-center h-full">Loading editor...</div>}
                 onMount={(editor) => {
+                    console.log('Editor mounted successfully');
                     const originalEditor = editor.getOriginalEditor();
                     const modifiedEditor = editor.getModifiedEditor();
 
@@ -142,6 +152,9 @@ export default function CodeEditor() {
                     modifiedEditor.onDidChangeModelContent(() => {
                         setRightContent(modifiedEditor.getValue());
                     });
+                }}
+                onError={(error) => {
+                    console.error('Editor error:', error);
                 }}
             />
         </div>

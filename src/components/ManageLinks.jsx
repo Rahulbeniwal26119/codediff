@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import ManageLinksModal from './ManageLinksModal';
+import { useCode } from '../context/CodeContext';
 
 export default function ManageLinks({ disabled }) {
     const [showModal, setShowModal] = useState(false);
+    const { isDarkTheme } = useCode();
 
     const handleClick = () => {
-        setShowModal(true);
+        if (!disabled) {
+            setShowModal(true);
+        }
     };
 
     return (
@@ -13,19 +17,22 @@ export default function ManageLinks({ disabled }) {
             <button 
                 onClick={handleClick} 
                 disabled={disabled}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 ${
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 ${
                     disabled 
-                        ? 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border'
-                        : 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover: border'
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : isDarkTheme 
+                            ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                title="Manage your diffs"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
-                Manage
+                <span className="hidden sm:inline text-sm">Manage</span>
             </button>
             
             {showModal && <ManageLinksModal onClose={() => setShowModal(false)} />}
         </>
     );
-} 
+}

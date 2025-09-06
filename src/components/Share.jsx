@@ -4,7 +4,7 @@ import { useCode } from '../context/CodeContext';
 const API_URL = process.env.REACT_APP_API_URL;
 
 export default function Share() {
-    const { leftContent, rightContent, selectedLanguage } = useCode();
+    const { leftContent, rightContent, selectedLanguage, isDarkTheme } = useCode();
 
     const handleShare = async () => {
         const accessToken = localStorage.getItem('access_token');
@@ -141,12 +141,17 @@ export default function Share() {
     return (
         <button 
             onClick={() => handleShare({ leftContent, rightContent, selectedLanguage })}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
+            className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 ${
+                isDarkTheme 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Share this diff"
         >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            Share
+            <span className="hidden sm:inline text-sm">Share</span>
         </button>
     );
 }

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-hot-toast";
+import { useCode } from '../context/CodeContext';
 
 const API_URL = process.env.REACT_APP_API_URL;
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function GoogleLogin() {
     const [user, setUser] = useState(null);
+    const { isDarkTheme } = useCode();
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -93,26 +95,21 @@ function GoogleLogin() {
     };
 
     return (
-        <div className="auth-container border-l border-[#545252] pl-4">
+        <div className={`ml-2 pl-3 border-l ${isDarkTheme ? 'border-gray-600' : 'border-gray-300'}`}>
             {user ? (
-                <div className="flex items-center space-x-2">
-
-
-                    <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border">
+                <div className="flex items-center">
+                    <button 
+                        onClick={handleLogout} 
+                        className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                            isDarkTheme 
+                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        title="Sign out"
+                    >
                         <img src={user.image} alt="Profile" className="w-6 h-6 rounded-full" />
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M10 17l5-5-5-5v4H3v2h7v4z" />
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                     </button>
                 </div>
@@ -127,11 +124,16 @@ function GoogleLogin() {
                         data-auto_prompt="false"
                     ></div>
                     <div
-                        className="g_id_signin flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border"
+                        className={`g_id_signin p-2 rounded-lg transition-all duration-200 ${
+                            isDarkTheme 
+                                ? 'bg-gray-700 hover:bg-gray-600' 
+                                : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
                         data-type="icon"
                         data-shape="circle"
-                        data-theme="filled_black"
-                        data-size="small"
+                        data-theme={isDarkTheme ? "filled_black" : "outline"}
+                        data-size="medium"
+                        title="Sign in with Google"
                     ></div>
                 </div>
             )}

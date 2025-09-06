@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const CodeContext = createContext();
 
@@ -8,7 +8,51 @@ export function CodeProvider({ children }) {
     const [selectedLanguage, setSelectedLanguage] = useState('JSON');
     const [showUpdateButton, setShowUpdateButton] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(true);
-    const [isSideBySide, setIsSideBySide] = useState(true);
+    
+    // Set default view mode based on screen size
+    const [isSideBySide, setIsSideBySide] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 1024; // Default to inline on smaller screens
+        }
+        return true;
+    });
+
+    // Listen for window resize to adjust view mode
+    useEffect(() => {
+        let timeoutId;
+        
+        const handleResize = () => {
+            // Debounce the resize handler to prevent rapid calls
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                if (window.innerWidth < 768) {
+                    // Force inline mode on mobile devices
+                    setIsSideBySide(false);
+                }
+            }, 150);
+        };
+
+        // Wrap in try-catch to handle ResizeObserver errors
+        const safeHandleResize = () => {
+            try {
+                handleResize();
+            } catch (error) {
+                // Ignore ResizeObserver errors
+                if (error.message.includes('ResizeObserver')) {
+                    return;
+                }
+                console.warn('Resize handler error:', error);
+            }
+        };
+
+        window.addEventListener('resize', safeHandleResize);
+        safeHandleResize(); // Check on initial load
+
+        return () => {
+            window.removeEventListener('resize', safeHandleResize);
+            clearTimeout(timeoutId);
+        };
+    }, []);
 
     const supportedLanguages = [
         { id: 'json', name: 'JSON' },

@@ -4,8 +4,8 @@ import { useCode } from '../context/CodeContext';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-export default function UpdateLink() {
-    const { leftContent, rightContent, selectedLanguage, disabled } = useCode();
+export default function UpdateLink({ disabled }) {
+    const { leftContent, rightContent, selectedLanguage, isDarkTheme } = useCode();
     const { diffId } = useParams();
 
     const handleUpdate = async ({ leftContent, rightContent, selectedLanguage }) => {
@@ -138,16 +138,19 @@ export default function UpdateLink() {
         <button 
             onClick={() => handleUpdate({ leftContent, rightContent, selectedLanguage })} 
             disabled={disabled}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-colors duration-200 ${
+            className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
                 disabled 
-                    ? 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover:bg-[#3d3d3d] border'
-                    : 'bg-[#2d2d2d] text-gray-200 border-gray-600 hover: border'
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : isDarkTheme 
+                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            title="Update this diff"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Update
+            <span className="hidden sm:inline">Update</span>
         </button>
     );
 }

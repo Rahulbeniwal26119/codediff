@@ -1,445 +1,196 @@
+/* Modern CodeDiff Styles */
 .App {
   min-height: 100vh;
-  background-color: #1e1e1e;
-  color: #cccccc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Prevent layout shifts */
+* {
+  box-sizing: border-box;
+}
+
+/* Base responsive layout */
 .layout-container {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  max-width: 100%;
 }
 
-/* Ad Container Styles */
-.ad-container {
-  width: 160px; /* Standard skyscraper ad width */
-  padding: 10px;
-  background-color: #252526;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+/* Monaco editor improvements */
+.monaco-editor {
+  border-radius: 8px;
 }
 
-.ad-placeholder {
-  width: 100%;
-  height: 600px; /* Standard skyscraper ad height */
-  background-color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed #555;
-  margin-bottom: 20px;
-}
-
-/* Main Content Styles */
-.main-content {
-  flex: 1;
-  min-width: 0; /* Prevents flex item from overflowing */
-  /* padding: 20px; */
-  display: flex;
-  flex-direction: column;
-}
-
-.input-section {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  background-color: #252526;
-  border-bottom: 1px solid #404040;
-  min-height: 250px;
-}
-
-.input-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-container h3 {
-  margin: 0;
-  color: #cccccc;
-}
-
-.editor-wrapper {
-  flex: 1;
-  /* border: 1px solid #404040; */
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.editor-wrapper > div {
-  height: 100%;
-}
-
-.diff-section {
-  flex: 1;
-  overflow: hidden;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .ad-container {
-    display: none; /* Hide ads on smaller screens */
-  }
-  
-  .main-content {
-    padding: 10px;
-  }
-  
-  .input-section {
-    flex-direction: column;
-  }
-}
-
-/* Keep existing diff-container and Monaco editor styles */
-.diff-container {
-  height: 100%;
-  background-color: #1e1e1e;
-}
-
-.diff-options {
-  color: #cccccc;
-}
-
-.diff-options label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.diff-navigation {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.diff-navigation button {
-  background: #3c3c3c;
-  border: none;
-  color: #cccccc;
-  padding: 4px 8px;
-  cursor: pointer;
-  border-radius: 2px;
-}
-
-.diff-navigation button:hover {
-  background: #4c4c4c;
-}
-
-.diff-navigation span {
-  color: #cccccc;
-}
-
-/* Monaco editor specific styles */
 .monaco-editor .margin {
-  background-color: #1e1e1e !important;
+  background-color: transparent !important;
 }
 
-.monaco-editor .minimap {
-  display: none;
+/* Ensure editor container has proper height and prevent resize loops */
+.monaco-diff-editor {
+  height: 100% !important;
+  min-height: 400px;
+  contain: layout style;
 }
 
-/* Dark theme */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1e1e1e;
-    color: #fff;
-  }
+.monaco-editor .overflow-guard {
+  border-radius: 8px;
+}
 
-  h1 {
-    color: #fff;
-  }
+/* Hide specific Monaco Editor status elements only */
+.monaco-editor .editor-status,
+.monaco-diff-editor .editor-status {
+  display: none !important;
+}
 
-  .input-type-toggle button {
-    background: #333;
-    color: #fff;
-    border-color: #444;
-  }
+/* Improve diff editor appearance */
+.monaco-diff-editor .editor.modified {
+  border-radius: 0 8px 8px 0;
+}
 
-  .input-type-toggle button.active {
-    background: #0056b3;
-  }
+.monaco-diff-editor .editor.original {
+  border-radius: 8px 0 0 8px;
+}
 
-  .input-group label {
-    color: #ddd;
+/* Blog Modal Animations */
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
   }
-
-  .input-group textarea {
-    background: #2d2d2d;
-    color: #fff;
-    border-color: #444;
-  }
-
-  .input-group input[type="file"] {
-    background: #2d2d2d;
-    color: #fff;
-    border-color: #444;
-  }
-
-  .diff-container {
-    border-color: #444;
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
-.diff-viewer {
-  background: #1e1e1e;
-  border-radius: 4px;
-  overflow: hidden;
-  height: calc(100vh - 250px);
-  min-height: 500px;
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
 }
 
-.diff-header {
-  padding: 12px;
-  border-bottom: 1px solid #444;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  background: red;
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  50% { transform: scale(1.1) rotate(180deg); opacity: 1; }
 }
 
-.diff-controls {
-  display: flex;
-  gap: 20px;
-  align-items: center;
+.blog-modal-enter {
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.diff-navigation {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.blog-modal-exit {
+  animation: modalSlideOut 0.3s ease-in-out;
 }
 
-.diff-navigation button {
-  background: #333;
-  border: 1px solid #555;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
+.sparkle-animation {
+  animation: sparkle 2s ease-in-out infinite;
 }
 
-.diff-navigation button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.diff-navigation button:hover:not(:disabled) {
-  background: #444;
-}
-
-.diff-content {
-  display: flex;
-  height: calc(100% - 50px);
-}
-
-.diff-pane {
-  flex: 1;
-  border-right: 1px solid #444;
-  overflow: auto;
-}
-
-.diff-pane:last-child {
-  border-right: none;
-}
-
-.diff-pane-header {
-  padding: 8px;
-  background: #252525;
-  color: #fff;
-  border-bottom: 1px solid #444;
-}
-
-.diff-pane pre {
-  margin: 0;
-  padding: 12px;
-  color: #fff;
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-.diff-highlight-red {
-  background-color: rgba(255, 0, 0, 0.2);
-  display: block;
-}
-
-.diff-highlight-green {
-  background-color: rgba(0, 255, 0, 0.2);
-  display: block;
-}
-
-/* Dark scrollbar styles */
-.diff-pane::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-.diff-pane::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
-
-.diff-pane::-webkit-scrollbar-thumb {
-  background-color: #444;
-  border-radius: 6px;
-  border: 3px solid #1e1e1e;
-}
-
-/* Add these new styles */
-.header-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background-color: #252526;
-  border-bottom: 1px solid #404040;
-}
-
-.language-selector {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.language-selector select {
-  padding: 6px 12px;
-  background-color: #3c3c3c;
-  color: #cccccc;
-  border: 1px solid #404040;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.language-selector select:hover {
-  background-color: #4c4c4c;
-}
-
-.file-controls {
-  display: flex;
-  gap: 20px;
-}
-
-.file-upload {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.file-upload label {
-  color: #cccccc;
-  font-size: 14px;
-}
-
-.file-upload input[type="file"] {
-  background-color: #3c3c3c;
-  color: #cccccc;
-  border: 1px solid #404040;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.file-upload input[type="file"]::-webkit-file-upload-button {
-  background-color: #4c4c4c;
-  color: #cccccc;
-  border: 1px solid #555;
-  border-radius: 3px;
-  padding: 4px 8px;
-  margin-right: 8px;
-  cursor: pointer;
-}
-
-.file-upload input[type="file"]::-webkit-file-upload-button:hover {
-  background-color: #5c5c5c;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .flex-responsive {
+    flex-direction: column;
+  }
+  
+  .gap-responsive {
+    gap: 0.5rem;
+  }
+  
+  .px-responsive {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
   .header-controls {
-    flex-direction: column;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
-
-  .file-controls {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .file-upload {
-    width: 100%;
-  }
-
-  .file-upload input[type="file"] {
-    flex: 1;
+  
+  .text-responsive {
+    font-size: 0.875rem;
   }
 }
 
-/* Add these new styles */
-.format-button {
-  background-color: #4c4c4c;
-  color: #cccccc;
-  border: 1px solid #555;
+@media (max-width: 640px) {
+  .sm\:hidden {
+    display: none;
+  }
+  
+  .header-spacing {
+    padding: 0.75rem 1rem;
+  }
+  
+  .button-compact {
+    padding: 0.5rem;
+  }
+}
+
+/* Custom scrollbar for better UX */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
   border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  margin-left: 8px;
-  font-size: 12px;
 }
 
-.format-button:hover {
-  background-color: #5c5c5c;
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
 }
 
-.format-button:active {
-  background-color: #666;
+/* Focus improvements */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
-/* Update file-upload to accommodate the format button */
-.file-upload {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+/* Loading states */
+.loading {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-/* Add these new styles */
-.editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.editor-header h3 {
-  margin: 0;
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
 }
 
-.editor-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.format-button {
-  background-color: #4c4c4c;
-  color: #cccccc;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.format-button:hover {
-  background-color: #5c5c5c;
-}
-
-.format-button:active {
-  background-color: #666;
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
 }
