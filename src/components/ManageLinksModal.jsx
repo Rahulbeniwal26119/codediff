@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     createColumnHelper,
     flexRender,
@@ -40,12 +40,100 @@ export default function ManageLinksModal({ onClose }) {
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const columnHelper = createColumnHelper();
 
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${day}/${month}/${year}, ${hours}:${minutes}:00`;
+    };
+
     const get_link = (id) => {
         const url = `${BASE_URL_FRONTEND}/${id}`;
         return <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400">
             {id}
         </a>
     }
+
+    const confirmDelete = (id) => {
+        setDiffToDelete(id);
+    };
+
+    const cancelDelete = () => {
+        setDiffToDelete(null);
+    };
+
+    const fetchDiffs = useCallback(async (page = 1) => {
+        try {
+            const access_token = localStorage.getItem('access_token');
+            const response = await fetch(
+                `${BASE_URL}/api/code-diff/?page=${page}&q=${debouncedSearchTerm}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`
+                    }
+                }
+            );
+
+        
+            const data = await response.json();
+            if (response.ok) {
+                setTotalCount(data.count);
+                setNextPage(data.next);
+                setPrevPage(data.previous);
+                
+                if (data.results.length === 0) {
+                    setIsLoading(false);
+                    return [];
+                }
+                
+                return data.results.map(diff => ({
+                    id: diff.unique_identifier,
+                    createdOn: diff.created_at,
+                    lastUpdated: diff.updated_at,
+                    info: `${diff.language} Comparison`,
+                    is_active: diff.is_active,
+                    unique_identifier: diff.unique_identifier,
+                    delete_link: `${BASE_URL}/api/code-diff/${diff.unique_identifier}/`,
+                }));
+            } else {
+                console.error('Error fetching diffs:', data.detail);
+                throw new Error(data.detail);
+            }
+        } catch (error) {
+            console.error('Error fetching diffs:', error);
+            setIsLoading(false);
+            return [];
+        }
+    }, [debouncedSearchTerm]);
+
+    const handleToggleActive = useCallback(async (diff) => {
+        try {
+            const access_token = localStorage.getItem('access_token');
+            const response = await fetch(
+                `${BASE_URL}/api/code-diff/${diff.unique_identifier}/toggle-diff/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (response.ok) {
+                const result = await fetchDiffs(currentPage);
+                setDiffs(result);
+            } else {
+                console.error('Error toggling diff status');
+            }
+        } catch (error) {
+            console.error('Error toggling diff status:', error);
+        }
+    }, [fetchDiffs, currentPage]);
 
     const columns = useMemo(
         () => [
@@ -98,7 +186,7 @@ export default function ManageLinksModal({ onClose }) {
                 ),
             }),
         ],
-        []
+        [columnHelper, handleToggleActive]
     );
 
     const table = useReactTable({
@@ -106,53 +194,6 @@ export default function ManageLinksModal({ onClose }) {
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
-
-    const fetchDiffs = async (page = 1) => {
-        try {
-            const access_token = localStorage.getItem('access_token');
-            const response = await fetch(
-                `${BASE_URL}/api/code-diff/?page=${page}&q=${debouncedSearchTerm}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${access_token}`
-                    }
-                }
-            );
-
-        
-            const data = await response.json();
-            if (response.ok) {
-                setTotalCount(data.count);
-                setNextPage(data.next);
-                setPrevPage(data.previous);
-                
-                if (data.results.length === 0) {
-                    setIsLoading(false);
-                    return [];
-                }
-                
-                return data.results.map(diff => ({
-                    id: diff.unique_identifier,
-                    createdOn: diff.created_at,
-                    lastUpdated: diff.updated_at,
-                    info: `${diff.language} Comparison`,
-                    is_active: diff.is_active,
-                    unique_identifier: diff.unique_identifier,
-                    delete_link: `${BASE_URL}/api/code-diff/${diff.unique_identifier}/`,
-                }));
-            } else {
-                console.error('Error fetching diffs:', data.detail);
-                // raise the error
-                throw new Error(data.detail);
-                setIsLoading(false);
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching diffs:', error);
-            setIsLoading(false);
-            return [];
-        }
-    };
 
     const handleDelete = async (id, deleteLink) => {
         try {
@@ -165,7 +206,6 @@ export default function ManageLinksModal({ onClose }) {
             });
 
             if (response.ok) {
-                // Refresh the current page
                 const result = await fetchDiffs(currentPage);
                 setDiffs(result);
                 setDiffToDelete(null);
@@ -177,32 +217,6 @@ export default function ManageLinksModal({ onClose }) {
         }
     };
 
-    const handleToggleActive = async (diff) => {
-        try {
-            const access_token = localStorage.getItem('access_token');
-            const response = await fetch(
-                `${BASE_URL}/api/code-diff/${diff.unique_identifier}/toggle-diff/`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
-
-            if (response.ok) {
-                // Refresh the current page to get updated data
-                const result = await fetchDiffs(currentPage);
-                setDiffs(result);
-            } else {
-                console.error('Error toggling diff status');
-            }
-        } catch (error) {
-            console.error('Error toggling diff status:', error);
-        }
-    };
-
     useEffect(() => {
         const loadDiffs = async () => {
             const result = await fetchDiffs(currentPage);
@@ -211,26 +225,7 @@ export default function ManageLinksModal({ onClose }) {
         };
 
         loadDiffs();
-    }, [currentPage, debouncedSearchTerm]);
-
-    const confirmDelete = (id) => {
-        setDiffToDelete(id);
-    };
-
-    const cancelDelete = () => {
-        setDiffToDelete(null);
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        
-        return `${day}/${month}/${year}, ${hours}:${minutes}:00`;
-    };
+    }, [currentPage, debouncedSearchTerm, fetchDiffs]);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

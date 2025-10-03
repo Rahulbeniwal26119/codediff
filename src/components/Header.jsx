@@ -1,5 +1,4 @@
 import Controls from './Controls';
-import { useParams } from 'react-router-dom';
 import { useCode } from '../context/CodeContext';
 import { useState } from 'react';
 
@@ -15,11 +14,6 @@ export default function Header() {
     } = useCode();
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    // Test function to trigger modal (remove in production)
-    const triggerModal = () => {
-        window.dispatchEvent(new CustomEvent('showBlogModal'));
-    };
 
     return (
         <header className={`border-b ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} px-4 py-3 transition-colors duration-200`}>
