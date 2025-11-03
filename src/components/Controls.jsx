@@ -48,7 +48,7 @@ export default function Controls() {
                 disabled={isLoggedIn}
             >
                 <div className={`${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <ManageLinks disabled={!} />
+                    <ManageLinks disabled={!isLoggedIn} />
                 </div>
             </Tooltip>
             
