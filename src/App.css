@@ -95,6 +95,38 @@
   animation: sparkle 2s ease-in-out infinite;
 }
 
+/* Performance optimizations to prevent layout shifts */
+.monaco-diff-editor .editor.modified {
+  width: 50% !important;
+  min-width: 50% !important;
+  max-width: 50% !important;
+  height: 100% !important;
+  min-height: 500px !important;
+  contain: layout style paint;
+  will-change: auto;
+}
+
+.monaco-diff-editor .editor.original {
+  width: 50% !important;
+  min-width: 50% !important;
+  max-width: 50% !important;
+  height: 100% !important;
+  min-height: 500px !important;
+  contain: layout style paint;
+  will-change: auto;
+}
+
+main[role="main"] {
+  min-height: 600px !important;
+  height: calc(100vh - 80px) !important;
+  contain: layout style;
+}
+
+/* Prevent layout shifts from dynamic content */
+.monaco-editor {
+  contain: layout style paint;
+}
+
 /* Responsive design improvements */
 @media (max-width: 768px) {
   .flex-responsive {

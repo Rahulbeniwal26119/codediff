@@ -27,30 +27,30 @@ export default function CodeEditor() {
 
     const { diffId } = useParams();
 
-    // Memoize editor options to prevent unnecessary re-renders
+    // Memoize editor options to prevent unnecessary re-renders and layout shifts
     const editorOptions = useMemo(() => ({
-        minimap: { enabled: window.innerWidth > 768, scale: 0.8 }, // Disable on mobile
-        fontSize: 14, // Reduced for better performance
+        minimap: { enabled: false }, // Disable minimap for better performance
+        fontSize: 14,
         lineHeight: 20,
         lineNumbers: 'on',
-        folding: true,
-        renderIndentGuides: false, // Disable for performance
-        formatOnPaste: false, // Disable for performance
+        folding: false, // Disable for performance
+        renderIndentGuides: false,
+        formatOnPaste: false,
         formatOnType: false,
         tabSize: 2,
-        automaticLayout: true,
+        automaticLayout: false, // Disable to prevent forced reflows
         scrollBeyondLastLine: false,
         wordWrap: 'on',
-        padding: { top: 8, bottom: 8 }, // Reduced padding
+        padding: { top: 8, bottom: 8 },
         suggest: {
-            snippets: 'off', // Disable for performance
+            snippets: 'off',
         },
-        bracketPairColorization: { enabled: false }, // Disable for performance
+        bracketPairColorization: { enabled: false },
         guides: {
             bracketPairs: false,
             indentation: false
         },
-        hover: { enabled: false }, // Disable for performance
+        hover: { enabled: false },
         parameterHints: { enabled: false },
         quickSuggestions: false,
         scrollbar: {
@@ -64,13 +64,21 @@ export default function CodeEditor() {
         originalEditable: true,
         modifiedEditable: true,
         renderSideBySide: isSideBySide,
-        ignoreTrimWhitespace: true, // Better diff performance
-        renderOverviewRuler: false, // Disable for performance
+        ignoreTrimWhitespace: true,
+        renderOverviewRuler: false,
         diffWordWrap: 'off',
-        enableSplitViewResizing: true,
-        contextmenu: false, // Disable context menu for performance
+        enableSplitViewResizing: false, // Disable to prevent layout shifts
+        contextmenu: false,
         readOnly: false,
         domReadOnly: false,
+        // Performance optimizations
+        glyphMargin: false,
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 3,
+        overviewRulerBorder: false,
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        dimension: { width: 0, height: 500 }, // Fixed height to prevent layout shift
     }), [isSideBySide]);
 
     // Debounced content handlers for better performance
@@ -157,13 +165,44 @@ export default function CodeEditor() {
 
 
 
-    // Optimized editor mount handler
+    // Optimized editor mount handler with manual resize to prevent forced reflows
     const handleEditorMount = useCallback((editor) => {
         const originalEditor = editor.getOriginalEditor();
         const modifiedEditor = editor.getModifiedEditor();
 
         // Debounced change handlers
-        let leftTimeout, rightTimeout;
+        let leftTimeout, rightTimeout, resizeTimeout;
+
+        // Manual resize handler to prevent forced reflows
+        const handleResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                try {
+                    const container = editor.getContainerDomNode();
+                    if (container) {
+                        const rect = container.getBoundingClientRect();
+                        if (rect.width > 0 && rect.height > 0) {
+                            editor.layout({ width: rect.width, height: rect.height });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Editor resize failed:', e);
+                }
+            }, 100);
+        };
+
+        // Set up resize observer for better performance
+        let resizeObserver;
+        if (window.ResizeObserver) {
+            resizeObserver = new ResizeObserver(handleResize);
+            const container = editor.getContainerDomNode();
+            if (container) {
+                resizeObserver.observe(container);
+            }
+        } else {
+            // Fallback to window resize
+            window.addEventListener('resize', handleResize, { passive: true });
+        }
 
         originalEditor.onDidChangeModelContent(() => {
             clearTimeout(leftTimeout);
@@ -179,17 +218,35 @@ export default function CodeEditor() {
             }, 300); // 300ms debounce
         });
 
+        // Initial layout after mount
+        setTimeout(handleResize, 100);
+
         // Cleanup
         return () => {
             clearTimeout(leftTimeout);
             clearTimeout(rightTimeout);
+            clearTimeout(resizeTimeout);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            } else {
+                window.removeEventListener('resize', handleResize);
+            }
         };
     }, [handleLeftContentChange, handleRightContentChange]);
 
     return (
-        <div className="h-full w-full flex flex-col" role="main" aria-label="Code Diff Editor">
+        <div 
+            className="h-full w-full flex flex-col" 
+            role="main" 
+            aria-label="Code Diff Editor"
+            style={{ 
+                minHeight: '500px', 
+                height: '100%',
+                contain: 'layout style'
+            }}
+        >
             <Suspense fallback={
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-full" style={{ minHeight: '500px' }}>
                     <LoadingSpinner 
                         size="lg" 
                         message="Loading Monaco Editor..."

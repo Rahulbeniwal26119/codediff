@@ -13,6 +13,26 @@ class PerformanceMonitor {
         }
         this.monitorBundleSize();
         this.monitorMemoryUsage();
+        this.trackLayoutShifts();
+    }
+
+    trackLayoutShifts() {
+        // Monitor Cumulative Layout Shift specifically
+        if ('PerformanceObserver' in window) {
+            const clsObserver = new PerformanceObserver((list) => {
+                let cls = 0;
+                for (const entry of list.getEntries()) {
+                    if (!entry.hadRecentInput) {
+                        cls += entry.value;
+                    }
+                }
+                this.metrics.set('cls', cls);
+                console.log('CLS Score:', cls);
+            });
+            
+            clsObserver.observe({ type: 'layout-shift', buffered: true });
+            this.observers.push(clsObserver);
+        }
     }
 
     setupObservers() {

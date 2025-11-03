@@ -11,13 +11,28 @@ export default function BlogPromotionModal() {
         const lastShown = localStorage.getItem('blogModalLastShown');
         const today = new Date().toDateString();
         
-        // Only show modal if user hasn't seen it today
+        // Only show modal if user hasn't seen it today and after significant delay
         if (lastShown !== today) {
-            // Show modal after a short delay
+            // Show modal only after page is completely stable to prevent performance impact
             const timer = setTimeout(() => {
-                console.log('Showing blog modal');
-                setIsVisible(true);
-            }, 2000);
+                // Check if page is idle and performance metrics are good
+                if (document.readyState === 'complete') {
+                    // Additional check for page stability
+                    requestIdleCallback(() => {
+                        console.log('Showing blog modal');
+                        setIsVisible(true);
+                    }, { timeout: 10000 });
+                } else {
+                    // Wait for page to be fully loaded
+                    window.addEventListener('load', () => {
+                        setTimeout(() => {
+                            requestIdleCallback(() => {
+                                setIsVisible(true);
+                            }, { timeout: 10000 });
+                        }, 3000);
+                    }, { once: true });
+                }
+            }, 10000); // Increased delay to 10 seconds to ensure page is stable
             
             return () => clearTimeout(timer);
         }
