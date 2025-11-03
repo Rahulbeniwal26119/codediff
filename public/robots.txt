@@ -1,3 +1,25 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Language-specific diff pages
+Allow: /json-diff
+Allow: /javascript-diff
+Allow: /python-diff
+Allow: /java-diff
+Allow: /php-diff
+Allow: /ruby-diff
+Allow: /go-diff
+Allow: /rust-diff
+Allow: /typescript-diff
+Allow: /html-diff
+Allow: /css-diff
+Allow: /xml-diff
+Allow: /yaml-diff
+Allow: /sql-diff
+Allow: /shell-diff
+
+# Disallow admin or private paths if any
+# Disallow: /admin/
+# Disallow: /api/
+
+Sitemap: https://codediff.takovibe.com/sitemap.xml

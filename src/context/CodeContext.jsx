@@ -1,18 +1,23 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { getLanguageTemplate, getSupportedLanguagesWithTemplates } from '../utils/languageTemplates';
 
 const CodeContext = createContext();
 
 export function CodeProvider({ children }) {
-    const [leftContent, setLeftContent] = useState('{\n  "a": "b",\n  "c": "d"\n}');
-    const [rightContent, setRightContent] = useState('{\n  "a": "b",\n  "c": "d"\n}');
-    const [selectedLanguage, setSelectedLanguage] = useState('JSON');
+    // All supported languages - dynamically loaded from templates
+    const supportedLanguages = getSupportedLanguagesWithTemplates();
+    
+    // State management
+    const [leftContent, setLeftContent] = useState('');
+    const [rightContent, setRightContent] = useState('');
+    const [selectedLanguage, setSelectedLanguage] = useState('json');
     const [showUpdateButton, setShowUpdateButton] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(true);
     
     // Set default view mode based on screen size
     const [isSideBySide, setIsSideBySide] = useState(() => {
         if (typeof window !== 'undefined') {
-            return window.innerWidth >= 1024; // Default to inline on smaller screens
+            return window.innerWidth >= 1024;
         }
         return true;
     });
@@ -22,22 +27,18 @@ export function CodeProvider({ children }) {
         let timeoutId;
         
         const handleResize = () => {
-            // Debounce the resize handler to prevent rapid calls
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 if (window.innerWidth < 768) {
-                    // Force inline mode on mobile devices
                     setIsSideBySide(false);
                 }
             }, 150);
         };
 
-        // Wrap in try-catch to handle ResizeObserver errors
         const safeHandleResize = () => {
             try {
                 handleResize();
             } catch (error) {
-                // Ignore ResizeObserver errors
                 if (error.message.includes('ResizeObserver')) {
                     return;
                 }
@@ -46,7 +47,7 @@ export function CodeProvider({ children }) {
         };
 
         window.addEventListener('resize', safeHandleResize);
-        safeHandleResize(); // Check on initial load
+        safeHandleResize();
 
         return () => {
             window.removeEventListener('resize', safeHandleResize);
@@ -54,18 +55,11 @@ export function CodeProvider({ children }) {
         };
     }, []);
 
-    const supportedLanguages = [
-        { id: 'json', name: 'JSON' },
-        { id: 'javascript', name: 'JavaScript' },
-        { id: 'typescript', name: 'TypeScript' },
-        { id: 'html', name: 'HTML' },
-        { id: 'css', name: 'CSS' },
-        { id: 'python', name: 'Python' },
-        { id: 'java', name: 'Java' },
-    ];
-
+    // Event handlers
     const handleLanguageChange = (e) => {
-        setSelectedLanguage(e.target.value);
+        const newLanguage = e.target.value;
+        setSelectedLanguage(newLanguage);
+        loadLanguageTemplate(newLanguage);
     };
 
     const handleFileUpload = (side) => (event) => {
@@ -83,6 +77,21 @@ export function CodeProvider({ children }) {
         }
     };
 
+    // Load language templates from centralized utility
+    const loadLanguageTemplate = useCallback((language) => {
+        const template = getLanguageTemplate(language);
+        if (template) {
+            setLeftContent(template.left);
+            setRightContent(template.right);
+        }
+        setSelectedLanguage(language);
+    }, []);
+
+    // Load default template on initialization
+    useEffect(() => {
+        loadLanguageTemplate('json');
+    }, [loadLanguageTemplate]);
+
     return (
         <CodeContext.Provider value={{
             leftContent,
@@ -99,7 +108,8 @@ export function CodeProvider({ children }) {
             setIsSideBySide,
             supportedLanguages,
             handleLanguageChange,
-            handleFileUpload
+            handleFileUpload,
+            loadLanguageTemplate
         }}>
             {children}
         </CodeContext.Provider>
