@@ -37,7 +37,7 @@ function App({ language }) {
 }
 
 function AppContent({ language }) {
-    const { isDarkTheme, setSelectedLanguage } = useCode();
+    const { isDarkTheme, setSelectedLanguage, isFullscreen, setIsFullscreen } = useCode();
 
     useEffect(() => {
         // Async SEO and analytics setup
@@ -65,8 +65,27 @@ function AppContent({ language }) {
         initializeSEO();
     }, [language, setSelectedLanguage]);
 
+    // Handle keyboard shortcuts for fullscreen
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'F11') {
+                event.preventDefault();
+                setIsFullscreen(!isFullscreen);
+            } else if (event.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullscreen, setIsFullscreen]);
+
     return (
-        <div className={`h-screen flex flex-col ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
+        <div className={`
+            ${isFullscreen ? 'fullscreen-diff' : 'h-screen flex flex-col'} 
+            ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'} 
+            transition-colors duration-200
+        `}>
             <Toaster
                 position="top-right"
                 toastOptions={{
@@ -84,8 +103,10 @@ function AppContent({ language }) {
                 }}
             />
 
-            <Header />
-            <main className="flex-1 min-h-0" role="main" aria-label="Code diff editor">
+            {!isFullscreen && <Header />}
+            <main className={`
+                ${isFullscreen ? 'h-screen w-screen' : 'flex-1 min-h-0'}
+            `} role="main" aria-label="Code diff editor">
                 <Suspense 
                     fallback={
                         <div className="flex items-center justify-center h-full">

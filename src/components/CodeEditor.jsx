@@ -22,7 +22,8 @@ export default function CodeEditor() {
         setRightContent,
         setSelectedLanguage,
         setShowUpdateButton,
-        isSideBySide
+        isSideBySide,
+        isFullscreen
     } = useCode();
 
     const { diffId } = useParams();
@@ -30,29 +31,34 @@ export default function CodeEditor() {
     // Memoize editor options to prevent unnecessary re-renders and layout shifts
     const editorOptions = useMemo(() => ({
         minimap: { enabled: false }, // Disable minimap for better performance
-        fontSize: 14,
-        lineHeight: 20,
+        fontSize: 16, // Larger, more comfortable font size for developers
+        lineHeight: 26, // Better line spacing for readability
+        fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Monaco, 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Ubuntu Mono', monospace",
+        fontLigatures: true, // Enable font ligatures for better code readability
         lineNumbers: 'on',
-        folding: false, // Disable for performance
-        renderIndentGuides: false,
+        folding: true, // Enable folding for better code navigation
+        renderIndentGuides: true, // Show indent guides for better code structure
         formatOnPaste: false,
         formatOnType: false,
         tabSize: 2,
         automaticLayout: false, // Disable to prevent forced reflows
         scrollBeyondLastLine: false,
         wordWrap: 'on',
-        padding: { top: 8, bottom: 8 },
+        padding: { top: 12, bottom: 12, left: 8, right: 8 }, // More padding for comfort
         suggest: {
             snippets: 'off',
         },
-        bracketPairColorization: { enabled: false },
+        bracketPairColorization: { enabled: true }, // Enable bracket colorization for better code reading
         guides: {
-            bracketPairs: false,
-            indentation: false
+            bracketPairs: true, // Show bracket pair guides
+            indentation: true // Show indentation guides
         },
-        hover: { enabled: false },
-        parameterHints: { enabled: false },
+        hover: { enabled: true }, // Enable hover for better code understanding
+        parameterHints: { enabled: true },
         quickSuggestions: false,
+        cursorBlinking: 'smooth',
+        cursorSmoothCaretAnimation: true,
+        smoothScrolling: true,
         scrollbar: {
             vertical: 'auto',
             horizontal: 'auto',
@@ -78,7 +84,7 @@ export default function CodeEditor() {
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
-        dimension: { width: 0, height: 500 }, // Fixed height to prevent layout shift
+        dimension: { width: 0, height: isFullscreen ? window.innerHeight : window.innerHeight - 120 }, // Dynamic height based on fullscreen mode
     }), [isSideBySide]);
 
     // Debounced content handlers for better performance
@@ -236,7 +242,10 @@ export default function CodeEditor() {
 
     return (
         <div 
-            className="h-full w-full flex flex-col" 
+            className={`
+                code-editor-main h-full w-full flex flex-col
+                ${isFullscreen ? 'fullscreen-diff' : ''}
+            `}
             role="main" 
             aria-label="Code Diff Editor"
             style={{ 

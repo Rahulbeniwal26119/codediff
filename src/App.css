@@ -8,6 +8,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Developer-friendly monospace font stack for code */
+.monaco-editor,
+.monaco-diff-editor,
+code,
+pre {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 
+               Monaco, 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 
+               'Ubuntu Mono', 'Droid Sans Mono', 'Courier New', monospace !important;
+  font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
+}
+
 /* Prevent layout shifts */
 * {
   box-sizing: border-box;
@@ -20,7 +31,6 @@
   min-height: 100vh;
 }
 
-/* Monaco editor improvements */
 .monaco-editor {
   border-radius: 8px;
 }
@@ -29,10 +39,9 @@
   background-color: transparent !important;
 }
 
-/* Ensure editor container has proper height and prevent resize loops */
 .monaco-diff-editor {
   height: 100% !important;
-  min-height: 400px;
+  min-height: calc(100vh - 120px) !important; /* Almost full screen */
   contain: layout style;
 }
 
@@ -95,31 +104,22 @@
   animation: sparkle 2s ease-in-out infinite;
 }
 
-/* Performance optimizations to prevent layout shifts */
 .monaco-diff-editor .editor.modified {
   width: 50% !important;
   min-width: 50% !important;
   max-width: 50% !important;
   height: 100% !important;
-  min-height: 500px !important;
-  contain: layout style paint;
-  will-change: auto;
-}
-
-.monaco-diff-editor .editor.original {
-  width: 50% !important;
-  min-width: 50% !important;
-  max-width: 50% !important;
-  height: 100% !important;
-  min-height: 500px !important;
+  min-height: calc(100vh - 140px) !important; /* Full screen minus header */
   contain: layout style paint;
   will-change: auto;
 }
 
 main[role="main"] {
-  min-height: 600px !important;
+  min-height: calc(100vh - 80px) !important;
   height: calc(100vh - 80px) !important;
   contain: layout style;
+  padding: 0 !important; /* Remove padding for full screen experience */
+  margin: 0 !important;
 }
 
 /* Prevent layout shifts from dynamic content */
@@ -213,6 +213,34 @@ input:focus-visible {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Enhanced inline diff styling for better code comparison */
+.monaco-diff-editor.inline .view-line {
+  font-size: 16px !important;
+  line-height: 28px !important;
+}
+
+/* Better diff visualization */
+
+.monaco-diff-editor .char-insert {
+  background-color: rgba(46, 160, 67, 0.2) !important;
+  border: 1px solid rgba(46, 160, 67, 0.4) !important;
+  border-radius: 5px;
+}
+
+.monaco-diff-editor .char-delete {
+  background-color: rgba(248, 81, 73, 0.2) !important;
+  border: 1px solid rgba(248, 81, 73, 0.4) !important;
+  border-radius: 5px;
+}
+
+.monaco-diff-editor .line-insert {
+  background-color: rgba(46, 160, 67, 0.1) !important;
+}
+
+.monaco-diff-editor .line-delete {
+  background-color: rgba(248, 81, 73, 0.1) !important;
 }
 
 /* Print styles */

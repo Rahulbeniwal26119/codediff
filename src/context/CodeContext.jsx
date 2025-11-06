@@ -13,6 +13,7 @@ export function CodeProvider({ children }) {
     const [selectedLanguage, setSelectedLanguage] = useState('json');
     const [showUpdateButton, setShowUpdateButton] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     
     // Set default view mode based on screen size
     const [isSideBySide, setIsSideBySide] = useState(() => {
@@ -106,6 +107,8 @@ export function CodeProvider({ children }) {
             setIsDarkTheme,
             isSideBySide,
             setIsSideBySide,
+            isFullscreen,
+            setIsFullscreen,
             supportedLanguages,
             handleLanguageChange,
             handleFileUpload,
