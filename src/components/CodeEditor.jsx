@@ -1,9 +1,12 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useMemo, useCallback, lazy, Suspense, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useCode } from '../context/CodeContext';
 import LoadingSpinner from './LoadingSpinner';
 import { getMonacoLanguageId } from '../utils/monacoLanguages';
+import { createOverlayToolbar } from '../utils/editorWidgets';
+import ExecutionResultModal from './ExecutionResultModal';
+import { formatCode, canFormatLanguage } from '../utils/codeFormatter';
 
 // Lazy load Monaco Editor for better initial bundle size
 const DiffEditor = lazy(() => 
@@ -27,6 +30,9 @@ export default function CodeEditor() {
     } = useCode();
 
     const { diffId } = useParams();
+    const [executionResult, setExecutionResult] = useState(null);
+    const [executionType, setExecutionType] = useState(null); // 'success' | 'error'
+    const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
 
     // Memoize editor options to prevent unnecessary re-renders and layout shifts
     const editorOptions = useMemo(() => ({
@@ -85,7 +91,7 @@ export default function CodeEditor() {
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
         dimension: { width: 0, height: isFullscreen ? window.innerHeight : window.innerHeight - 120 }, // Dynamic height based on fullscreen mode
-    }), [isSideBySide]);
+    }), [isSideBySide, isFullscreen]);
 
     // Debounced content handlers for better performance
     const handleLeftContentChange = useCallback((newValue) => {
@@ -170,9 +176,57 @@ export default function CodeEditor() {
     }, [diffId, setLeftContent, setRightContent, setSelectedLanguage, setShowUpdateButton]);
 
 
+    const handleExecute = useCallback((code, lang) => {
+        if (!code) return;
 
-    // Optimized editor mount handler with manual resize to prevent forced reflows
+        if (lang === 'javascript') {
+            const logs = [];
+            const mockConsole = {
+                log: (...args) => logs.push(args.join(' ')),
+                error: (...args) => logs.push('ERROR: ' + args.join(' ')),
+                warn: (...args) => logs.push('WARN: ' + args.join(' ')),
+            };
+
+            try {
+                // eslint-disable-next-line no-new-func
+                new Function('console', code)(mockConsole);
+                setExecutionResult(logs.length > 0 ? logs.join('\n') : 'Code executed successfully (no output)');
+                setExecutionType('success');
+            } catch (e) {
+                setExecutionResult(e.toString());
+                setExecutionType('error');
+            }
+        } else if (lang === 'json') {
+            try {
+                JSON.parse(code);
+                setExecutionResult('Valid JSON');
+                setExecutionType('success');
+            } catch (e) {
+                setExecutionResult(e.message);
+                setExecutionType('error');
+            }
+        }
+        setIsExecutionModalOpen(true);
+        setIsExecutionModalOpen(true);
+    }, []);
+
+    const handleFormat = useCallback(async (code, lang, setContent) => {
+        try {
+            const formatted = await formatCode(code, lang);
+            setContent(formatted);
+            toast.success('Formatted!');
+        } catch (e) {
+            toast.error('Format failed: ' + e.message);
+        }
+    }, []);
+
+
+    const [editorInstance, setEditorInstance] = useState(null);
+
+    // Optimized editor mount handler
     const handleEditorMount = useCallback((editor) => {
+        setEditorInstance(editor);
+        
         const originalEditor = editor.getOriginalEditor();
         const modifiedEditor = editor.getModifiedEditor();
 
@@ -228,6 +282,7 @@ export default function CodeEditor() {
         setTimeout(handleResize, 100);
 
         // Cleanup
+        // Cleanup
         return () => {
             clearTimeout(leftTimeout);
             clearTimeout(rightTimeout);
@@ -239,6 +294,68 @@ export default function CodeEditor() {
             }
         };
     }, [handleLeftContentChange, handleRightContentChange]);
+
+    // Manage Widgets based on Language
+    useEffect(() => {
+        if (!editorInstance) return;
+
+        const originalEditor = editorInstance.getOriginalEditor();
+        const modifiedEditor = editorInstance.getModifiedEditor();
+
+        // Helper to remove widgets
+        const removeWidgets = () => {
+            originalEditor.removeOverlayWidget({ getId: () => 'left-toolbar-widget' });
+            modifiedEditor.removeOverlayWidget({ getId: () => 'right-toolbar-widget' });
+        };
+
+        // Remove existing first
+        removeWidgets();
+
+        const getButtons = (editor, setContent) => {
+            const buttons = [];
+
+            // Format Button
+            if (canFormatLanguage(selectedLanguage)) {
+                buttons.push({
+                    label: 'Format',
+                    icon: '✨',
+                    colorClass: 'bg-purple-600 text-white hover:bg-purple-700',
+                    onClick: () => handleFormat(editor.getValue(), selectedLanguage, setContent)
+                });
+            }
+
+            // Execute/Validate Button
+            if (selectedLanguage === 'javascript' || selectedLanguage === 'json') {
+                const isJS = selectedLanguage === 'javascript';
+                buttons.push({
+                    label: isJS ? 'Execute' : 'Validate',
+                    icon: isJS ? '▶' : '✓',
+                    colorClass: isJS ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-600 text-white hover:bg-blue-700',
+                    onClick: () => handleExecute(editor.getValue(), selectedLanguage)
+                });
+            }
+
+            return buttons;
+        };
+
+        const leftButtons = getButtons(originalEditor, setLeftContent);
+        const rightButtons = getButtons(modifiedEditor, setRightContent);
+
+        if (leftButtons.length > 0) {
+            const leftWidget = createOverlayToolbar(originalEditor, 'left-toolbar-widget', leftButtons);
+            originalEditor.addOverlayWidget(leftWidget);
+        }
+
+        if (rightButtons.length > 0) {
+            const rightWidget = createOverlayToolbar(modifiedEditor, 'right-toolbar-widget', rightButtons);
+            modifiedEditor.addOverlayWidget(rightWidget);
+        }
+
+        // Cleanup on unmount or change
+        return () => {
+            removeWidgets();
+        };
+    }, [editorInstance, selectedLanguage, handleExecute, handleFormat, setLeftContent, setRightContent]);
 
     return (
         <div 
@@ -278,6 +395,13 @@ export default function CodeEditor() {
                     }}
                 />
             </Suspense>
+
+            <ExecutionResultModal 
+                isOpen={isExecutionModalOpen}
+                onClose={() => setIsExecutionModalOpen(false)}
+                result={executionResult}
+                type={executionType}
+            />
         </div>
     );
 }

@@ -4,12 +4,13 @@ const path = require('path');
 const generateSitemap = () => {
     const baseURL = 'https://codediff.takovibe.com';
     const currentDate = new Date().toISOString();
-    
+
     const languages = [
         'json', 'javascript', 'python', 'java',
-        'php', 'ruby', 'go', 'rust', 'typescript', 'html', 
+        'php', 'ruby', 'go', 'rust', 'typescript', 'html',
         'css', 'xml', 'yaml', 'sql', 'shell', 'csharp', 'cpp',
-        'kotlin', 'swift', 'dart', 'scala', 'r', 'powershell', 'haskell'
+        'kotlin', 'swift', 'dart', 'scala', 'r', 'powershell', 'haskell',
+        'objective-c', 'clojure', 'elixir', 'fsharp', 'lua', 'perl'
     ];
 
     const urls = [
@@ -48,15 +49,15 @@ ${urls.map(url => `    <url>
 // Generate robots.txt
 const generateRobotsTxt = () => {
     const baseURL = 'https://codediff.takovibe.com';
-    
+
     const languages = [
         'json', 'javascript', 'python', 'java',
-        'php', 'ruby', 'go', 'rust', 'typescript', 'html', 
+        'php', 'ruby', 'go', 'rust', 'typescript', 'html',
         'css', 'xml', 'yaml', 'sql', 'shell'
     ];
-    
+
     const languageAllowRules = languages.map(lang => `Allow: /${lang}-diff`).join('\n');
-    
+
     return `User-agent: *
 Allow: /
 

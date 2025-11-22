@@ -3,9 +3,9 @@
 class SEOManager {
     constructor() {
         this.defaultMeta = {
-            title: 'CodeDiff - Advanced Code Comparison Tool',
-            description: 'Compare, analyze, and visualize code differences with our powerful online diff tool. Support for multiple languages, syntax highlighting, and real-time collaboration.',
-            keywords: 'code diff, code comparison, diff tool, code analysis, programming, developer tools, syntax highlighting',
+            title: 'CodeDiff - The Ultimate Online Code Comparison Tool',
+            description: 'Instantly compare and analyze code differences with the world\'s most advanced online diff tool. Supports 20+ languages, real-time syntax highlighting, and seamless sharing.',
+            keywords: 'code diff, code comparison, diff tool, online diff, javascript diff, python diff, java diff, developer tools, syntax highlighting, code analyzer, free diff tool',
             author: 'Rahul Beniwal',
             robots: 'index, follow',
             canonical: window.location.origin,
@@ -116,19 +116,19 @@ class SEOManager {
     updateForDiff(language, diffId) {
         const title = `${language} Code Diff - ${diffId} | CodeDiff`;
         const description = `Compare and analyze ${language} code differences. View detailed diff analysis with syntax highlighting and advanced comparison features.`;
-        
+
         this.setTitle(title);
         this.setMetaTag('description', description);
-        
+
         // Update Open Graph
         this.setMetaProperty('og:title', title);
         this.setMetaProperty('og:description', description);
         this.setMetaProperty('og:url', window.location.href);
-        
+
         // Update Twitter Card
         this.setMetaTag('twitter:title', title);
         this.setMetaTag('twitter:description', description);
-        
+
         // Update canonical URL
         this.setLinkTag('canonical', window.location.href);
 
@@ -173,20 +173,20 @@ class SEOManager {
         const languageDisplayName = languageNames[language] || language.toUpperCase();
         const title = `${languageDisplayName} Code Diff Tool | Online ${languageDisplayName} Code Comparison`;
         const description = `Professional ${languageDisplayName} code diff tool. Compare, analyze and visualize ${languageDisplayName} code differences online with syntax highlighting, side-by-side view, and advanced diff algorithms.`;
-        
+
         this.setTitle(title);
         this.setMetaTag('description', description);
         this.setMetaTag('keywords', `${language} diff, ${language} code comparison, ${languageDisplayName} diff tool, code analyzer, ${language} syntax highlighting, online diff, code comparison tool`);
-        
+
         // Update Open Graph
         this.setMetaProperty('og:title', title);
         this.setMetaProperty('og:description', description);
         this.setMetaProperty('og:url', window.location.href);
-        
+
         // Update Twitter Card
         this.setMetaTag('twitter:title', title);
         this.setMetaTag('twitter:description', description);
-        
+
         // Update canonical URL
         this.setLinkTag('canonical', window.location.href);
 
@@ -309,22 +309,22 @@ class SEOManager {
 const seoManager = new SEOManager();
 
 // Export utility functions
-export const updateSEOForDiff = (language, diffId) => 
+export const updateSEOForDiff = (language, diffId) =>
     seoManager.updateForDiff(language, diffId);
 
-export const updateSEOForLanguage = (language) => 
+export const updateSEOForLanguage = (language) =>
     seoManager.updateForLanguage(language);
 
-export const addBreadcrumbs = (breadcrumbs) => 
+export const addBreadcrumbs = (breadcrumbs) =>
     seoManager.addBreadcrumbs(breadcrumbs);
 
-export const trackPageView = () => 
+export const trackPageView = () =>
     seoManager.trackPageView();
 
-export const preloadResources = () => 
+export const preloadResources = () =>
     seoManager.preloadCriticalResources();
 
-export const optimizeImages = () => 
+export const optimizeImages = () =>
     seoManager.optimizeImages();
 
 export default seoManager;

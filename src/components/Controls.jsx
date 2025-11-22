@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { FaRobot } from 'react-icons/fa';
 import GoogleLogin from './GoogleLogin';
 import Share from './Share';
 import UpdateLink from './UpdateLink';
@@ -6,19 +8,42 @@ import ManageLinks from './ManageLinks';
 import Tooltip from './Tooltip';
 import ToggleTheme from './ToggleTheme';
 import FullscreenToggle from './FullscreenToggle';
+import ToolsDropdown from './ToolsDropdown';
+import AIExplainModal from './AIExplainModal';
 import { useCode } from '../context/CodeContext';
 
 const isLoggedIn = localStorage.getItem('access_token');
 
 export default function Controls() {
-    const { leftContent, rightContent, selectedLanguage, showUpdateButton } = useCode();
+    const { 
+        leftContent, 
+        rightContent, 
+        selectedLanguage, 
+        showUpdateButton,
+        setLeftContent,
+        setRightContent
+    } = useCode();
     const { diffId } = useParams();
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
     return (
         <div className="flex items-center gap-1 sm:gap-2">
             {/* Fullscreen toggle */}
             {/* <FullscreenToggle /> */}
             
+            {/* Tools Dropdown (Beautify & Explain) */}
+            <ToolsDropdown 
+                leftCode={leftContent}
+                rightCode={rightContent}
+                language={selectedLanguage}
+                onFormat={({ left, right }) => {
+                    if (left !== undefined) setLeftContent(left);
+                    if (right !== undefined) setRightContent(right);
+                }}
+                onExplain={() => setIsAIModalOpen(true)}
+                disabled={!leftContent && !rightContent}
+            />
+
             {/* Theme toggle */}
             <ToggleTheme />
             
@@ -58,6 +83,15 @@ export default function Controls() {
             
             {/* Login/User */}
             <GoogleLogin />
+
+            {/* AI Modal */}
+            <AIExplainModal 
+                isOpen={isAIModalOpen}
+                onClose={() => setIsAIModalOpen(false)}
+                leftCode={leftContent}
+                rightCode={rightContent}
+                language={selectedLanguage}
+            />
         </div>
     );
 }

@@ -26,9 +26,15 @@ export const getMonacoLanguageId = (language) => {
         'scala': 'scala',
         'r': 'r',
         'powershell': 'powershell',
-        'haskell': 'haskell'
+        'haskell': 'haskell',
+        'objective-c': 'objective-c',
+        'clojure': 'clojure',
+        'elixir': 'elixir',
+        'fsharp': 'fsharp',
+        'lua': 'lua',
+        'perl': 'perl'
     };
-    
+
     return languageMap[language.toLowerCase()] || 'plaintext';
 };
 
@@ -58,8 +64,14 @@ export const getLanguageDisplayName = (language) => {
         'scala': 'Scala',
         'r': 'R',
         'powershell': 'PowerShell',
-        'haskell': 'Haskell'
+        'haskell': 'Haskell',
+        'objective-c': 'Objective-C',
+        'clojure': 'Clojure',
+        'elixir': 'Elixir',
+        'fsharp': 'F#',
+        'lua': 'Lua',
+        'perl': 'Perl'
     };
-    
+
     return displayNames[language.toLowerCase()] || language.toUpperCase();
 };
