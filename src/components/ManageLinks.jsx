@@ -22,7 +22,7 @@ export default function ManageLinks({ disabled }) {
                         ? 'opacity-50 cursor-not-allowed' 
                         : isDarkTheme 
                             ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border-gray-600 hover:border-gray-500' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300 hover:border-gray-400'
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border-gray-300 hover:border-gray-400'
                 }`}
                 title="Manage your diffs"
             >

@@ -27,7 +27,7 @@ export default function Controls() {
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
     return (
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2">
             {/* Fullscreen toggle */}
             {/* <FullscreenToggle /> */}
             
@@ -45,7 +45,7 @@ export default function Controls() {
             />
 
             {/* Theme toggle */}
-            <ToggleTheme />
+            {/* <ToggleTheme /> */}
             
             {/* Update button - only show when applicable */}
             {diffId && (

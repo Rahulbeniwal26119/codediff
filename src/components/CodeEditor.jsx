@@ -314,12 +314,12 @@ export default function CodeEditor() {
         const getButtons = (editor, setContent) => {
             const buttons = [];
 
-            // Format Button
+            // Format Button - Purple (Primary brand color)
             if (canFormatLanguage(selectedLanguage)) {
                 buttons.push({
                     label: 'Format',
                     icon: '✨',
-                    colorClass: 'bg-purple-600 text-white hover:bg-purple-700',
+                    color: 'purple',
                     onClick: () => handleFormat(editor.getValue(), selectedLanguage, setContent)
                 });
             }
@@ -330,7 +330,7 @@ export default function CodeEditor() {
                 buttons.push({
                     label: isJS ? 'Execute' : 'Validate',
                     icon: isJS ? '▶' : '✓',
-                    colorClass: isJS ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-600 text-white hover:bg-blue-700',
+                    color: isJS ? 'emerald' : 'sky', // Emerald for execute, Sky for validate
                     onClick: () => handleExecute(editor.getValue(), selectedLanguage)
                 });
             }

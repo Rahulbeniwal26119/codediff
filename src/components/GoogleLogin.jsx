@@ -102,7 +102,7 @@ function GoogleLogin() {
                         className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
                             isDarkTheme 
                                 ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                         }`}
                         title="Sign out"
                     >

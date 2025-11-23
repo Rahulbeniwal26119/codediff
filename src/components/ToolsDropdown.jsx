@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { FaTools, FaMagic, FaRobot, FaChevronDown } from 'react-icons/fa';
-import * as prettier from 'prettier/standalone';
-import * as parserBabel from 'prettier/plugins/babel';
-import * as parserEstree from 'prettier/plugins/estree';
-import * as parserHtml from 'prettier/plugins/html';
-import * as parserPostcss from 'prettier/plugins/postcss';
-import * as parserYaml from 'prettier/plugins/yaml';
+import { FaTools, FaMagic, FaRobot } from 'react-icons/fa';
 import { formatCode, canFormatLanguage } from '../utils/codeFormatter';
+import { cn } from '../utils/cn';
+import { useCode } from '../context/CodeContext';
+import IconButton from './ui/IconButton';
 
 const ToolsDropdown = ({ 
     leftCode, 
@@ -17,6 +15,7 @@ const ToolsDropdown = ({
     onExplain,
     disabled 
 }) => {
+    const { isDarkTheme } = useCode();
     const [isOpen, setIsOpen] = useState(false);
     const [isFormatting, setIsFormatting] = useState(false);
     const dropdownRef = useRef(null);
@@ -35,7 +34,7 @@ const ToolsDropdown = ({
     const handleFormat = async () => {
         if (!leftCode && !rightCode) return;
         
-        setIsOpen(false); // Close menu immediately
+        setIsOpen(false);
         setIsFormatting(true);
         
         try {
@@ -67,49 +66,76 @@ const ToolsDropdown = ({
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button
+            <IconButton
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`
-                    flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all border
-                    ${disabled 
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700' 
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'
-                    }
-                `}
+                variant="tonal"
             >
-                <FaTools className="text-gray-500 dark:text-gray-400" />
-                <span>Tools</span>
-                <FaChevronDown className={`text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
+                <FaTools className="w-4 h-4" />
+            </IconButton>
 
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    {/* Beautify Option */}
-                    {canFormat && (
-                        <button
-                            onClick={handleFormat}
-                            disabled={isFormatting || (!leftCode && !rightCode)}
-                            className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
-                        >
-                            <FaMagic className={`text-purple-500 ${isFormatting ? 'animate-pulse' : ''}`} />
-                            <span>{isFormatting ? 'Formatting...' : 'Beautify Code'}</span>
-                        </button>
-                    )}
-
-                    {/* Explain Option */}
-                    <button
-                        onClick={() => {
-                            onExplain();
-                            setIsOpen(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        className={cn(
+                            'absolute right-0 mt-2 w-48 rounded-2xl shadow-xl border overflow-hidden z-50',
+                            isDarkTheme 
+                                ? 'bg-surface-800 border-surface-700' 
+                                : 'bg-white border-surface-200'
+                        )}
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
-                        <FaRobot className="text-blue-500" />
-                        <span>Explain Diff (AI)</span>
-                    </button>
-                </div>
-            )}
+                        <div className="py-2">
+                            <motion.button
+                                onClick={handleFormat}
+                                disabled={!canFormat || isFormatting}
+                                className={cn(
+                                    'w-full px-4 py-3 text-left flex items-center gap-3 transition-colors',
+                                    canFormat && !isFormatting
+                                        ? isDarkTheme
+                                            ? 'text-surface-200 hover:bg-surface-700'
+                                            : 'text-surface-900 hover:bg-surface-100'
+                                        : 'text-surface-400 cursor-not-allowed'
+                                )}
+                                whileHover={canFormat && !isFormatting ? { x: 4 } : {}}
+                                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                            >
+                                <FaMagic className={cn(
+                                    'w-4 h-4',
+                                    isFormatting && 'animate-spin'
+                                )} />
+                                <span className="font-medium">
+                                    {isFormatting ? 'Formatting...' : 'Beautify Code'}
+                                </span>
+                            </motion.button>
+
+                            <motion.button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    onExplain();
+                                }}
+                                disabled={disabled}
+                                className={cn(
+                                    'w-full px-4 py-3 text-left flex items-center gap-3 transition-colors',
+                                    !disabled
+                                        ? isDarkTheme
+                                            ? 'text-surface-200 hover:bg-surface-700'
+                                            : 'text-surface-900 hover:bg-surface-100'
+                                        : 'text-surface-400 cursor-not-allowed'
+                                )}
+                                whileHover={!disabled ? { x: 4 } : {}}
+                                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                            >
+                                <FaRobot className="w-4 h-4" />
+                                <span className="font-medium">Explain Diff (AI)</span>
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
