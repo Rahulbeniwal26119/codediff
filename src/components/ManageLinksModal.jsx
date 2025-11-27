@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import {
     createColumnHelper,
     flexRender,
@@ -247,8 +248,8 @@ export default function ManageLinksModal({ onClose }) {
         loadDiffs();
     }, [currentPage, debouncedSearchTerm, fetchDiffs]);
 
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
             <div className={`rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border ${
                 isDarkTheme 
                     ? 'bg-gray-800 border-gray-700' 
@@ -534,6 +535,7 @@ export default function ManageLinksModal({ onClose }) {
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 } 

@@ -47,7 +47,7 @@ export default function CodeEditor() {
         formatOnPaste: false,
         formatOnType: false,
         tabSize: 2,
-        automaticLayout: false, // Disable to prevent forced reflows
+        automaticLayout: true, // Enable automatic layout to handle resizing naturally
         scrollBeyondLastLine: false,
         wordWrap: 'on',
         padding: { top: 12, bottom: 12, left: 8, right: 8 }, // More padding for comfort
@@ -75,11 +75,11 @@ export default function CodeEditor() {
         colorDecorators: false,
         originalEditable: true,
         modifiedEditable: true,
-        renderSideBySide: isSideBySide,
+        renderSideBySide: isSideBySide && window.innerWidth >= 768, // Force inline on mobile
         ignoreTrimWhitespace: true,
         renderOverviewRuler: false,
-        diffWordWrap: 'off',
-        enableSplitViewResizing: false, // Disable to prevent layout shifts
+        diffWordWrap: window.innerWidth < 768 ? 'on' : 'off',
+        enableSplitViewResizing: isSideBySide, // Only enable resizing in split view
         contextmenu: false,
         readOnly: false,
         domReadOnly: false,
@@ -90,8 +90,7 @@ export default function CodeEditor() {
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
-        dimension: { width: 0, height: isFullscreen ? window.innerHeight : window.innerHeight - 120 }, // Dynamic height based on fullscreen mode
-    }), [isSideBySide, isFullscreen]);
+    }), [isSideBySide]);
 
     // Debounced content handlers for better performance
     const handleLeftContentChange = useCallback((newValue) => {
@@ -231,38 +230,7 @@ export default function CodeEditor() {
         const modifiedEditor = editor.getModifiedEditor();
 
         // Debounced change handlers
-        let leftTimeout, rightTimeout, resizeTimeout;
-
-        // Manual resize handler to prevent forced reflows
-        const handleResize = () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                try {
-                    const container = editor.getContainerDomNode();
-                    if (container) {
-                        const rect = container.getBoundingClientRect();
-                        if (rect.width > 0 && rect.height > 0) {
-                            editor.layout({ width: rect.width, height: rect.height });
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Editor resize failed:', e);
-                }
-            }, 100);
-        };
-
-        // Set up resize observer for better performance
-        let resizeObserver;
-        if (window.ResizeObserver) {
-            resizeObserver = new ResizeObserver(handleResize);
-            const container = editor.getContainerDomNode();
-            if (container) {
-                resizeObserver.observe(container);
-            }
-        } else {
-            // Fallback to window resize
-            window.addEventListener('resize', handleResize, { passive: true });
-        }
+        let leftTimeout, rightTimeout;
 
         originalEditor.onDidChangeModelContent(() => {
             clearTimeout(leftTimeout);
@@ -278,26 +246,34 @@ export default function CodeEditor() {
             }, 300); // 300ms debounce
         });
 
-        // Initial layout after mount
-        setTimeout(handleResize, 100);
-
-        // Cleanup
         // Cleanup
         return () => {
             clearTimeout(leftTimeout);
             clearTimeout(rightTimeout);
-            clearTimeout(resizeTimeout);
-            if (resizeObserver) {
-                resizeObserver.disconnect();
-            } else {
-                window.removeEventListener('resize', handleResize);
-            }
         };
     }, [handleLeftContentChange, handleRightContentChange]);
+
+    // Trigger layout when view mode changes - Safe now that we don't force remount
+    useEffect(() => {
+        if (editorInstance) {
+            setTimeout(() => {
+                editorInstance.layout();
+            }, 50);
+        }
+    }, [isSideBySide, editorInstance]);
 
     // Manage Widgets based on Language
     useEffect(() => {
         if (!editorInstance) return;
+
+        // Hide widgets in inline view
+        if (!isSideBySide) {
+            const originalEditor = editorInstance.getOriginalEditor();
+            const modifiedEditor = editorInstance.getModifiedEditor();
+            originalEditor.removeOverlayWidget({ getId: () => 'left-toolbar-widget' });
+            modifiedEditor.removeOverlayWidget({ getId: () => 'right-toolbar-widget' });
+            return;
+        }
 
         const originalEditor = editorInstance.getOriginalEditor();
         const modifiedEditor = editorInstance.getModifiedEditor();
@@ -355,7 +331,7 @@ export default function CodeEditor() {
         return () => {
             removeWidgets();
         };
-    }, [editorInstance, selectedLanguage, handleExecute, handleFormat, setLeftContent, setRightContent]);
+    }, [editorInstance, selectedLanguage, handleExecute, handleFormat, setLeftContent, setRightContent, isSideBySide]);
 
     return (
         <div 
