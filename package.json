@@ -27,8 +27,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate:sitemap": "node scripts/generate-sitemap.js",
-    "prebuild": "npm run generate:sitemap",
-    "deploy": "npx wrangler pages deploy build"
+    "prebuild": "npm run generate:sitemap"
   },
   "eslintConfig": {
     "extends": [
