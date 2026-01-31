@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Controls from './Controls';
 import { useCode } from '../context/CodeContext';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getLanguageDisplayName } from '../utils/monacoLanguages';
 import Button from './ui/Button';
 import IconButton from './ui/IconButton';
@@ -16,19 +15,17 @@ export default function Header() {
         handleFileUpload,
         supportedLanguages,
         isSideBySide,
-        setIsSideBySide,
-        loadLanguageTemplate
+        setIsSideBySide
     } = useCode();
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const navigate = useNavigate();
 
     return (
-        <motion.header 
+        <motion.header
             className={cn(
                 'border-b backdrop-blur-md bg-opacity-90 sticky top-0 z-50',
-                isDarkTheme 
-                    ? 'bg-surface-900 border-surface-700' 
+                isDarkTheme
+                    ? 'bg-surface-900 border-surface-700'
                     : 'bg-white border-surface-200'
             )}
             initial={{ y: -100 }}
@@ -40,23 +37,23 @@ export default function Header() {
                 {/* Left section: Logo and core controls */}
                 <div className="flex items-center gap-6">
                     {/* Logo */}
-                    <motion.a 
-                        href="/" 
+                    <motion.a
+                        href="/"
                         className="flex items-center gap-3 group"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                     >
-                        <motion.img 
-                            src="/logo.png" 
-                            alt="CodeDiff" 
-                            className="w-10 h-10 rounded-2xl shadow-md" 
+                        <motion.img
+                            src="/logo.png"
+                            alt="CodeDiff"
+                            className="w-10 h-10 rounded-2xl shadow-md"
                             whileHover={{ rotate: 5 }}
                             transition={{ type: 'spring', stiffness: 400 }}
                         />
                         <span className={cn(
                             'font-bold text-xl',
-                            isDarkTheme 
-                                ? 'bg-gradient-to-r from-primary-400 to-primary-200 bg-clip-text text-transparent' 
+                            isDarkTheme
+                                ? 'bg-gradient-to-r from-primary-400 to-primary-200 bg-clip-text text-transparent'
                                 : 'text-primary-700'
                         )}>
                             CodeDiff
@@ -78,8 +75,8 @@ export default function Header() {
                                 'px-4 py-2 rounded-2xl text-sm border-2 font-medium',
                                 'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
                                 'transition-all cursor-pointer',
-                                isDarkTheme 
-                                    ? 'bg-surface-800 text-surface-200 border-surface-700 hover:border-surface-600' 
+                                isDarkTheme
+                                    ? 'bg-surface-800 text-surface-200 border-surface-700 hover:border-surface-600'
                                     : 'bg-surface-50 text-surface-900 border-surface-300 hover:border-surface-400'
                             )}
                         >
@@ -166,16 +163,16 @@ export default function Header() {
                 {/* Mobile header - top row */}
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <motion.a 
-                        href="/" 
+                    <motion.a
+                        href="/"
                         className="flex items-center gap-2"
                         whileTap={{ scale: 0.95 }}
                     >
                         <img src="/logo.png" alt="CodeDiff" className="w-8 h-8 rounded-xl shadow-md" />
                         <span className={cn(
                             'font-bold text-base',
-                            isDarkTheme 
-                                ? 'bg-gradient-to-r from-primary-400 to-primary-200 bg-clip-text text-transparent' 
+                            isDarkTheme
+                                ? 'bg-gradient-to-r from-primary-400 to-primary-200 bg-clip-text text-transparent'
                                 : 'text-primary-700'
                         )}>
                             CodeDiff
@@ -229,8 +226,8 @@ export default function Header() {
                                     className={cn(
                                         'w-full px-4 py-3 rounded-2xl text-sm border-2 font-medium',
                                         'focus:outline-none focus:ring-2 focus:ring-primary-500',
-                                        isDarkTheme 
-                                            ? 'bg-surface-800 text-surface-200 border-surface-700' 
+                                        isDarkTheme
+                                            ? 'bg-surface-800 text-surface-200 border-surface-700'
                                             : 'bg-surface-50 text-surface-900 border-surface-300'
                                     )}
                                 >

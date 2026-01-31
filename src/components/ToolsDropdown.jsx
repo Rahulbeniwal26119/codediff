@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { FaTools, FaMagic, FaRobot } from 'react-icons/fa';
+import { FaTools, FaMagic } from 'react-icons/fa';
 import { formatCode, canFormatLanguage } from '../utils/codeFormatter';
 import { cn } from '../utils/cn';
 import { useCode } from '../context/CodeContext';
 import IconButton from './ui/IconButton';
 
-const ToolsDropdown = ({ 
-    leftCode, 
-    rightCode, 
-    language, 
-    onFormat, 
-    onExplain,
-    disabled 
+const ToolsDropdown = ({
+    leftCode,
+    rightCode,
+    language,
+    onFormat,
+
+    disabled
 }) => {
     const { isDarkTheme } = useCode();
     const [isOpen, setIsOpen] = useState(false);
@@ -33,10 +33,10 @@ const ToolsDropdown = ({
 
     const handleFormat = async () => {
         if (!leftCode && !rightCode) return;
-        
+
         setIsOpen(false);
         setIsFormatting(true);
-        
+
         try {
             if (!canFormatLanguage(language)) {
                 toast.error(`Formatting not supported for ${language}`);
@@ -49,9 +49,9 @@ const ToolsDropdown = ({
                 rightCode ? formatCode(rightCode, language) : Promise.resolve(null)
             ]);
 
-            onFormat({ 
-                left: formattedLeft !== null ? formattedLeft : undefined, 
-                right: formattedRight !== null ? formattedRight : undefined 
+            onFormat({
+                left: formattedLeft !== null ? formattedLeft : undefined,
+                right: formattedRight !== null ? formattedRight : undefined
             });
             toast.success('Code formatted!');
         } catch (error) {
@@ -79,8 +79,8 @@ const ToolsDropdown = ({
                     <motion.div
                         className={cn(
                             'absolute right-0 mt-2 w-48 rounded-2xl shadow-xl border overflow-hidden z-50',
-                            isDarkTheme 
-                                ? 'bg-surface-800 border-surface-700' 
+                            isDarkTheme
+                                ? 'bg-surface-800 border-surface-700'
                                 : 'bg-white border-surface-200'
                         )}
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -112,26 +112,7 @@ const ToolsDropdown = ({
                                 </span>
                             </motion.button>
 
-                            <motion.button
-                                onClick={() => {
-                                    setIsOpen(false);
-                                    onExplain();
-                                }}
-                                disabled={disabled}
-                                className={cn(
-                                    'w-full px-4 py-3 text-left flex items-center gap-3 transition-colors',
-                                    !disabled
-                                        ? isDarkTheme
-                                            ? 'text-surface-200 hover:bg-surface-700'
-                                            : 'text-surface-900 hover:bg-surface-100'
-                                        : 'text-surface-400 cursor-not-allowed'
-                                )}
-                                whileHover={!disabled ? { x: 4 } : {}}
-                                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                            >
-                                <FaRobot className="w-4 h-4" />
-                                <span className="font-medium">Explain Diff (AI)</span>
-                            </motion.button>
+
                         </div>
                     </motion.div>
                 )}

@@ -26,7 +26,7 @@ export const languageTemplates = {
   "skills": ["JavaScript", "Python", "React"]
 }`
     },
-    
+
     javascript: {
         left: `function calculateSum(a, b) {
     return a + b;
@@ -48,7 +48,7 @@ const sum = calculateSum(...numbers);
 const avg = calculateAverage(numbers);
 console.log(\`Sum: \${sum}, Average: \${avg}\`);`
     },
-    
+
     python: {
         left: `def calculate_sum(numbers):
     total = 0
@@ -76,7 +76,7 @@ numbers = [1, 2, 3, 4, 5, 6]
 stats = calculate_stats(numbers)
 print(f"Stats: {stats}")`
     },
-    
+
     java: {
         left: `public class Calculator {
     public static int sum(int[] numbers) {
@@ -117,7 +117,7 @@ public class Calculator {
     }
 }`
     },
-    
+
     php: {
         left: `<?php
 function calculateSum($numbers) {
@@ -154,7 +154,7 @@ $stats = getStats($numbers);
 print_r($stats);
 ?>`
     },
-    
+
     ruby: {
         left: `def calculate_sum(numbers)
   total = 0
@@ -188,7 +188,7 @@ numbers = [1, 2, 3, 4, 5, 6]
 stats = calculate_stats(numbers)
 puts "Stats: #{stats}"`
     },
-    
+
     go: {
         left: `package main
 
@@ -233,7 +233,7 @@ func main() {
     fmt.Printf("Sum: %d, Average: %.2f, Count: %d\\n", sum, avg, len(numbers))
 }`
     },
-    
+
     rust: {
         left: `fn calculate_sum(numbers: &[i32]) -> i32 {
     let mut total = 0;
@@ -271,7 +271,7 @@ fn main() {
     print_stats(&numbers);
 }`
     },
-    
+
     typescript: {
         left: `function calculateSum(a: number, b: number): number {
     return a + b;
@@ -306,7 +306,7 @@ const numbers: number[] = [1, 2, 3, 4, 5, 6];
 const stats: Stats = getStats(numbers);
 console.log(\`Stats:\`, stats);`
     },
-    
+
     html: {
         left: `<!DOCTYPE html>
 <html lang="en">
@@ -356,7 +356,7 @@ console.log(\`Stats:\`, stats);`
 </body>
 </html>`
     },
-    
+
     css: {
         left: `body {
     margin: 0;
@@ -442,7 +442,7 @@ footer {
     margin-top: 2rem;
 }`
     },
-    
+
     xml: {
         left: `<?xml version="1.0" encoding="UTF-8"?>
 <users>
@@ -490,7 +490,7 @@ footer {
     </user>
 </users>`
     },
-    
+
     yaml: {
         left: `name: My Application
 version: 1.0.0
@@ -542,7 +542,7 @@ features:
   - rate_limiting
   - logging`
     },
-    
+
     sql: {
         left: `SELECT id, name, email
 FROM users 
@@ -569,7 +569,7 @@ HAVING COUNT(o.id) > 0
 ORDER BY total_spent DESC, u.name ASC
 LIMIT 50;`
     },
-    
+
     shell: {
         left: `#!/bin/bash
 
@@ -623,7 +623,7 @@ main() {
 # Run main function
 main "$@"`
     },
-    
+
     // Additional popular languages for comparison
     csharp: {
         left: `using System;
@@ -678,7 +678,7 @@ public class Calculator
     }
 }`
     },
-    
+
     cpp: {
         left: `#include <iostream>
 #include <vector>
@@ -726,7 +726,7 @@ int main() {
     return 0;
 }`
     },
-    
+
     kotlin: {
         left: `fun calculateSum(numbers: List<Int>): Int {
     var total = 0
@@ -762,7 +762,7 @@ fun main() {
     println("Sum: \${stats.sum}, Average: \${String.format("%.2f", stats.average)}")
 }`
     },
-    
+
     swift: {
         left: `import Foundation
 
@@ -797,7 +797,7 @@ struct Calculator {
 let numbers = [1, 2, 3, 4, 5, 6]
 Calculator.printStats(numbers)`
     },
-    
+
     dart: {
         left: `int calculateSum(List<int> numbers) {
   int total = 0;
@@ -832,11 +832,11 @@ void main() {
 void main() {
   List<int> numbers = [1, 2, 3, 4, 5, 6];
   var stats = Calculator.getStats(numbers);
-  print('Stats: \$stats');
+  print('Stats: $stats');
   print('Sum: \${stats['sum']}, Average: \${stats['average'].toStringAsFixed(2)}');
 }`
     },
-    
+
     scala: {
         left: `object Calculator {
   def calculateSum(numbers: List[Int]): Int = {
@@ -869,12 +869,12 @@ void main() {
   def main(args: Array[String]): Unit = {
     val numbers = List(1, 2, 3, 4, 5, 6)
     val stats = getStats(numbers)
-    println(s"Stats: \$stats")
+    println(s"Stats: $stats")
     println(f"Sum: \${stats.sum}, Average: \${stats.average}%.2f")
   }
 }`
     },
-    
+
     r: {
         left: `calculate_sum <- function(numbers) {
   total <- 0
@@ -912,7 +912,7 @@ cat("Average:", round(stats$average, 2), "\\n")
 cat("Median:", stats$median, "\\n")
 cat("Count:", stats$count, "\\n")`
     },
-    
+
     powershell: {
         left: `function Calculate-Sum {
     param([int[]]$Numbers)
@@ -956,7 +956,7 @@ Write-Host "Average: $($stats.Average)"
 Write-Host "Count: $($stats.Count)"
 Write-Host "Range: $($stats.Min) - $($stats.Max)"`
     },
-    
+
     haskell: {
         left: `calculateSum :: [Int] -> Int
 calculateSum [] = 0
@@ -1010,13 +1010,13 @@ export const getLanguageTemplate = (language) => {
 export const getSupportedLanguagesWithTemplates = () => {
     // Monaco Editor supported languages that we have templates for
     const monacoSupportedLanguages = [
-        'json', 'javascript', 'typescript', 'html', 'css', 'xml', 'yaml', 
+        'json', 'javascript', 'typescript', 'html', 'css', 'xml', 'yaml',
         'java', 'python', 'go', 'rust', 'php', 'ruby', 'sql', 'shell',
-        'csharp', 'cpp', 'kotlin', 'swift', 'dart', 'scala', 'r', 
+        'csharp', 'cpp', 'kotlin', 'swift', 'dart', 'scala', 'r',
         'powershell', 'haskell'
     ];
-    
-    return Object.keys(languageTemplates).filter(lang => 
+
+    return Object.keys(languageTemplates).filter(lang =>
         monacoSupportedLanguages.includes(lang)
     );
 };

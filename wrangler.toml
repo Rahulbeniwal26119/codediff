@@ -1,2 +1,2 @@
-name = "code-diff-formatter"
+name = "codediff"
 pages_build_output_dir = "build"

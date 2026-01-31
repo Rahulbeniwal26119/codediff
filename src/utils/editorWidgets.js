@@ -1,5 +1,4 @@
-import { motion } from 'framer-motion';
-import { cn } from '../utils/cn';
+
 
 export const createOverlayToolbar = (editor, id, buttons) => {
     return {
@@ -22,11 +21,7 @@ export const createOverlayToolbar = (editor, id, buttons) => {
                     const button = document.createElement('button');
 
                     // Material 3 styling with proper colors
-                    const colorClasses = {
-                        purple: 'bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg',
-                        emerald: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg',
-                        sky: 'bg-sky-600 hover:bg-sky-700 text-white shadow-md hover:shadow-lg',
-                    };
+
 
                     button.className = 'editor-action-button';
                     button.style.cssText = `
