@@ -6,7 +6,7 @@ const CodeContext = createContext();
 export function CodeProvider({ children }) {
     // All supported languages - dynamically loaded from templates
     const supportedLanguages = getSupportedLanguagesWithTemplates();
-    
+
     // State management
     const [leftContent, setLeftContent] = useState('');
     const [rightContent, setRightContent] = useState('');
@@ -14,7 +14,17 @@ export function CodeProvider({ children }) {
     const [showUpdateButton, setShowUpdateButton] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+    // Apply dark mode class to html element
+    useEffect(() => {
+        if (isDarkTheme) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDarkTheme]);
+
     // Set default view mode based on screen size
     const [isSideBySide, setIsSideBySide] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -26,7 +36,7 @@ export function CodeProvider({ children }) {
     // Listen for window resize to adjust view mode
     useEffect(() => {
         let timeoutId;
-        
+
         const handleResize = () => {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
@@ -109,6 +119,8 @@ export function CodeProvider({ children }) {
             setIsSideBySide,
             isFullscreen,
             setIsFullscreen,
+            isExportModalOpen,
+            setIsExportModalOpen,
             supportedLanguages,
             handleLanguageChange,
             handleFileUpload,

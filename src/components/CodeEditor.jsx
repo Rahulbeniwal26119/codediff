@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useMemo, useCallback, lazy, Suspense, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useCode } from '../context/CodeContext';
 import LoadingSpinner from './LoadingSpinner';
@@ -9,8 +10,8 @@ import ExecutionResultModal from './ExecutionResultModal';
 import { formatCode, canFormatLanguage } from '../utils/codeFormatter';
 
 // Lazy load Monaco Editor for better initial bundle size
-const DiffEditor = lazy(() => 
-  import('@monaco-editor/react').then(module => ({ default: module.DiffEditor }))
+const DiffEditor = lazy(() =>
+    import('@monaco-editor/react').then(module => ({ default: module.DiffEditor }))
 );
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -33,6 +34,74 @@ export default function CodeEditor() {
     const [executionResult, setExecutionResult] = useState(null);
     const [executionType, setExecutionType] = useState(null); // 'success' | 'error'
     const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Drag & Drop Handlers
+    const handleDragOver = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.currentTarget.contains(e.relatedTarget)) return;
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback(async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+
+        const readFile = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => resolve({
+                    content: event.target.result,
+                    name: file.name
+                });
+                reader.onerror = (error) => reject(error);
+                reader.readAsText(file);
+            });
+        };
+
+        try {
+            if (files.length >= 2) {
+                // Handle 2 files: Left = First, Right = Second
+                const [file1, file2] = await Promise.all([
+                    readFile(files[0]),
+                    readFile(files[1])
+                ]);
+
+                setLeftContent(file1.content);
+                setRightContent(file2.content);
+                toast.success(`Loaded ${file1.name} and ${file2.name}`);
+
+                // Try to detect language from extension of first file
+                const ext = file1.name.split('.').pop().toLowerCase();
+                // Simple mapping (could be improved)
+                if (['js', 'jsx', 'ts', 'tsx'].includes(ext)) setSelectedLanguage('javascript');
+                else if (['py'].includes(ext)) setSelectedLanguage('python');
+                else if (['json'].includes(ext)) setSelectedLanguage('json');
+                else if (['html'].includes(ext)) setSelectedLanguage('html');
+                else if (['css'].includes(ext)) setSelectedLanguage('css');
+
+            } else {
+                // Handle 1 file: Update Right (Modified)
+                const file = await readFile(files[0]);
+                setRightContent(file.content);
+                toast.success(`Loaded ${file.name} into Modified view`);
+            }
+        } catch (error) {
+            console.error('Error reading files:', error);
+            toast.error('Failed to read files');
+        }
+    }, [setLeftContent, setRightContent, setSelectedLanguage]);
 
     // Memoize editor options to prevent unnecessary re-renders and layout shifts
     const editorOptions = useMemo(() => ({
@@ -113,8 +182,8 @@ export default function CodeEditor() {
                     setLeftContent(result.data.code_before);
                     setRightContent(result.data.code_after);
                     setSelectedLanguage(result.data.language);
-                    
-                    if (localStorage?.access_token && result.data.access_token && 
+
+                    if (localStorage?.access_token && result.data.access_token &&
                         localStorage?.access_token === result.data.access_token) {
                         setShowUpdateButton(true);
                     } else {
@@ -141,17 +210,17 @@ export default function CodeEditor() {
                 }
 
                 const result = await response.json();
-                
+
                 // Cache the result
                 sessionStorage.setItem(`diff-${diffId}`, JSON.stringify(result));
-                
+
                 setLeftContent(result.data.code_before);
                 setRightContent(result.data.code_after);
                 setSelectedLanguage(result.data.language);
 
                 toast.success('Diff loaded successfully');
-                
-                if (localStorage?.access_token && result.data.access_token && 
+
+                if (localStorage?.access_token && result.data.access_token &&
                     localStorage?.access_token === result.data.access_token) {
                     setShowUpdateButton(true);
                 } else {
@@ -225,7 +294,7 @@ export default function CodeEditor() {
     // Optimized editor mount handler
     const handleEditorMount = useCallback((editor) => {
         setEditorInstance(editor);
-        
+
         const originalEditor = editor.getOriginalEditor();
         const modifiedEditor = editor.getModifiedEditor();
 
@@ -334,23 +403,24 @@ export default function CodeEditor() {
     }, [editorInstance, selectedLanguage, handleExecute, handleFormat, setLeftContent, setRightContent, isSideBySide]);
 
     return (
-        <div 
+        <div
             className={`
-                code-editor-main h-full w-full flex flex-col
+                code-editor-main absolute inset-0 flex flex-col
                 ${isFullscreen ? 'fullscreen-diff' : ''}
             `}
-            role="main" 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            role="main"
             aria-label="Code Diff Editor"
-            style={{ 
-                minHeight: '500px', 
-                height: '100%',
+            style={{
                 contain: 'layout style'
             }}
         >
             <Suspense fallback={
-                <div className="flex items-center justify-center h-full" style={{ minHeight: '500px' }}>
-                    <LoadingSpinner 
-                        size="lg" 
+                <div className="flex items-center justify-center h-full">
+                    <LoadingSpinner
+                        size="lg"
                         message="Loading Monaco Editor..."
                         className="p-8"
                     />
@@ -372,7 +442,38 @@ export default function CodeEditor() {
                 />
             </Suspense>
 
-            <ExecutionResultModal 
+            {/* Drag & Drop Overlay */}
+            <AnimatePresence>
+                {isDragging && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-primary-500/20 backdrop-blur-sm border-4 border-primary-500 border-dashed rounded-lg m-4"
+                    >
+                        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl transform scale-110">
+                            <div className="flex flex-col items-center gap-4 text-center">
+                                <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                        Drop files here
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Drop one file to update "Modified" <br />
+                                        Drop two files to update both
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <ExecutionResultModal
                 isOpen={isExecutionModalOpen}
                 onClose={() => setIsExecutionModalOpen(false)}
                 result={executionResult}

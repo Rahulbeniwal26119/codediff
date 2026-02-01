@@ -2,7 +2,9 @@ import { Toaster } from 'react-hot-toast';
 import React, { useEffect, Suspense } from 'react';
 import './App.css';
 import Header from './components/Header';
+
 import CodeEditor from './components/CodeEditor';
+import ExportModal from './components/ExportModal';
 import BlogPromotionModal from './components/BlogPromotionModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { CodeProvider, useCode } from './context/CodeContext';
@@ -21,7 +23,7 @@ function App({ language }) {
         };
 
         window.addEventListener('error', handleError);
-        
+
         return () => {
             window.removeEventListener('error', handleError);
         };
@@ -37,20 +39,20 @@ function App({ language }) {
 }
 
 function AppContent({ language }) {
-    const { isDarkTheme, setSelectedLanguage, isFullscreen, setIsFullscreen } = useCode();
+    const { isDarkTheme, setSelectedLanguage, isFullscreen, setIsFullscreen, isExportModalOpen, setIsExportModalOpen } = useCode();
 
     useEffect(() => {
         // Async SEO and analytics setup
         const initializeSEO = async () => {
             try {
                 const { updateSEOForLanguage, trackPageView } = await seoUtils;
-                
+
                 // Set language if provided from route
                 if (language) {
                     setSelectedLanguage(language);
                     updateSEOForLanguage(language);
                 }
-                
+
                 // Track page view for analytics
                 trackPageView();
             } catch (error) {
@@ -96,18 +98,22 @@ function AppContent({ language }) {
                         border: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
                         borderRadius: '8px',
                         fontSize: '14px',
-                        boxShadow: isDarkTheme 
-                            ? '0 10px 15px -3px rgba(0, 0, 0, 0.3)' 
+                        boxShadow: isDarkTheme
+                            ? '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
                             : '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                     },
                 }}
             />
 
-            {!isFullscreen && <Header />}
+            {!isFullscreen && (
+                <>
+                    <Header />
+                </>
+            )}
             <main className={`
-                ${isFullscreen ? 'h-screen w-screen' : 'flex-1 min-h-0'}
+                ${isFullscreen ? 'h-screen w-screen' : 'flex-1 min-h-0 relative'}
             `} role="main" aria-label="Code diff editor">
-                <Suspense 
+                <Suspense
                     fallback={
                         <div className="flex items-center justify-center h-full">
                             <div className="text-center">
@@ -122,11 +128,16 @@ function AppContent({ language }) {
                     <CodeEditor />
                 </Suspense>
             </main>
-            
+
             {/* Blog promotion modal */}
             <Suspense fallback={null}>
                 <BlogPromotionModal />
             </Suspense>
+
+            <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+            />
         </div>
     );
 }

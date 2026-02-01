@@ -40,11 +40,11 @@ pre {
   background-color: transparent !important;
 }
 
+/* Remove incorrect hardcoded constraints */
 .monaco-diff-editor {
+  /* Let the container control size */
+  width: 100% !important;
   height: 100% !important;
-  min-height: calc(100vh - 120px) !important;
-  /* Almost full screen */
-  contain: layout style;
 }
 
 .monaco-editor .overflow-guard {
@@ -120,12 +120,14 @@ pre {
 
 
 main[role="main"] {
-  min-height: calc(100vh - 80px) !important;
-  height: calc(100vh - 80px) !important;
+  /* Let flexbox handle the height */
+  flex: 1 1 auto;
+  min-height: 0;
   contain: layout style;
   padding: 0 !important;
-  /* Remove padding for full screen experience */
   margin: 0 !important;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Prevent layout shifts from dynamic content */
