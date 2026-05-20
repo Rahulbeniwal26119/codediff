@@ -5,7 +5,7 @@ import { useCode } from '../context/CodeContext';
 const API_URL = process.env.REACT_APP_API_URL;
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
-function GoogleLogin() {
+function GoogleLogin({ compact = false }) {
     const [user, setUser] = useState(null);
     const { isDarkTheme } = useCode();
 
@@ -94,20 +94,27 @@ function GoogleLogin() {
     };
 
     return (
-        <div className={`ml-2 pl-3 border-l ${isDarkTheme ? 'border-gray-600' : 'border-gray-300'}`}>
+        <div className={compact ? '' : `ml-2 pl-3 border-l ${isDarkTheme ? 'border-gray-600' : 'border-gray-300'}`}>
             {user ? (
                 <div className="flex items-center">
                     <button 
                         onClick={handleLogout} 
-                        className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
-                            isDarkTheme 
-                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                        }`}
+                        className={compact
+                            ? `flex h-9 items-center gap-2 rounded-lg border px-2 transition-all duration-200 ${
+                                isDarkTheme
+                                    ? 'border-[#33261e] bg-[#17110d] text-[#f6eee7] hover:border-[#ff7a1a]/45 hover:bg-[#211812]'
+                                    : 'border-[#eadfd6] bg-white text-[#302822] hover:border-[#ff7a1a]/45 hover:bg-[#fff4ea]'
+                            }`
+                            : `p-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                                isDarkTheme 
+                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                            }`
+                        }
                         title="Sign out"
                     >
-                        <img src={user.image} alt="Profile" className="w-6 h-6 rounded-full" />
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <img src={user.image} alt="Profile" className={compact ? 'h-6 w-6 rounded-full' : 'w-6 h-6 rounded-full'} />
+                        <svg className={compact ? 'h-3.5 w-3.5 text-[#ff9a3d]' : 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                     </button>
@@ -123,11 +130,18 @@ function GoogleLogin() {
                         data-auto_prompt="false"
                     ></div>
                     <div
-                        className={`g_id_signin p-2 rounded-lg transition-all duration-200 ${
-                            isDarkTheme 
-                                ? 'bg-gray-700 hover:bg-gray-600' 
-                                : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
+                        className={compact
+                            ? `g_id_signin rounded-lg border p-1 transition-all duration-200 ${
+                                isDarkTheme
+                                    ? 'border-[#33261e] bg-[#17110d] hover:border-[#ff7a1a]/45 hover:bg-[#211812]'
+                                    : 'border-[#eadfd6] bg-white hover:border-[#ff7a1a]/45 hover:bg-[#fff4ea]'
+                            }`
+                            : `g_id_signin p-2 rounded-lg transition-all duration-200 ${
+                                isDarkTheme 
+                                    ? 'bg-gray-700 hover:bg-gray-600' 
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                            }`
+                        }
                         data-type="icon"
                         data-shape="circle"
                         data-theme={isDarkTheme ? "filled_black" : "outline"}

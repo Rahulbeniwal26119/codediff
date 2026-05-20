@@ -37,7 +37,7 @@ const copyToClipboard = async (text) => {
     }
 };
 
-export default function Share() {
+export default function Share({ compact = false }) {
     const { leftContent, rightContent, selectedLanguage, isDarkTheme } = useCode();
 
     const handleShare = async () => {
@@ -364,17 +364,24 @@ export default function Share() {
     return (
         <button 
             onClick={() => handleShare({ leftContent, rightContent, selectedLanguage })}
-            className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 ${
-                isDarkTheme 
-                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-            }`}
+            className={compact
+                ? `group flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold transition-all duration-200 ${
+                    isDarkTheme
+                        ? 'border-[#33261e] bg-[#17110d] text-[#f6eee7] hover:border-[#ff7a1a]/45 hover:bg-[#211812]'
+                        : 'border-[#eadfd6] bg-white text-[#302822] hover:border-[#ff7a1a]/45 hover:bg-[#fff4ea]'
+                }`
+                : `p-1.5 sm:p-2 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 ${
+                    isDarkTheme 
+                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                }`
+            }
             title="Share this diff"
         >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={compact ? 'h-4 w-4 text-[#9fb4d8] transition group-hover:text-[#ff9a3d]' : 'w-4 h-4 sm:w-5 sm:h-5'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            <span className="hidden sm:inline text-sm">Share</span>
+            <span className={compact ? 'hidden sm:inline' : 'hidden sm:inline text-sm'}>Share</span>
         </button>
     );
 }

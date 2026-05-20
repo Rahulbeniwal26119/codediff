@@ -82,8 +82,9 @@ function AppContent({ language }) {
 
     return (
         <div className={`
-            ${isFullscreen ? 'fullscreen-diff' : 'h-screen flex flex-col'} 
-            ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'} 
+            h-screen flex flex-col
+            ${isFullscreen ? 'fullscreen-diff bg-[#080604]' : ''} 
+            ${!isFullscreen && (isDarkTheme ? 'bg-[#080604]' : 'bg-[#f4eee8]')} 
             transition-colors duration-200
         `}>
             <Toaster
@@ -105,7 +106,7 @@ function AppContent({ language }) {
 
             {!isFullscreen && <Header />}
             <main className={`
-                ${isFullscreen ? 'h-screen w-screen' : 'flex-1 min-h-0'}
+                ${isFullscreen ? 'fullscreen-main h-screen w-screen flex-1 min-h-0' : 'flex-1 min-h-0'}
             `} role="main" aria-label="Code diff editor">
                 <Suspense 
                     fallback={
@@ -124,9 +125,11 @@ function AppContent({ language }) {
             </main>
             
             {/* Blog promotion modal */}
-            <Suspense fallback={null}>
-                <BlogPromotionModal />
-            </Suspense>
+            {!isFullscreen && (
+                <Suspense fallback={null}>
+                    <BlogPromotionModal />
+                </Suspense>
+            )}
         </div>
     );
 }

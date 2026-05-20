@@ -1,5 +1,24 @@
-import { motion } from 'framer-motion';
-import { cn } from '../utils/cn';
+const getButtonTheme = (color) => {
+    const themes = {
+        purple: {
+            accent: '#ff8a1f',
+            hoverAccent: '#ff9f42',
+            glow: 'rgba(255, 122, 26, 0.22)',
+        },
+        emerald: {
+            accent: '#44d38a',
+            hoverAccent: '#63e2a0',
+            glow: 'rgba(68, 211, 138, 0.18)',
+        },
+        sky: {
+            accent: '#44d38a',
+            hoverAccent: '#63e2a0',
+            glow: 'rgba(68, 211, 138, 0.18)',
+        },
+    };
+
+    return themes[color] || themes.purple;
+};
 
 export const createOverlayToolbar = (editor, id, buttons) => {
     return {
@@ -11,121 +30,99 @@ export const createOverlayToolbar = (editor, id, buttons) => {
                 this.domNode.className = 'monaco-overlay-widget';
                 this.domNode.style.cssText = `
                     display: flex;
-                    gap: 8px;
-                    padding: 8px;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 4px;
+                    margin: 8px 10px 0 0;
                     z-index: 100;
-                    flex-wrap: wrap;
-                    max-width: 100%;
+                    max-width: calc(100% - 20px);
+                    border: 1px solid rgba(255, 122, 26, 0.18);
+                    border-radius: 12px;
+                    background: rgba(12, 10, 8, 0.88);
+                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(14px);
                 `;
 
                 buttons.forEach(btn => {
                     const button = document.createElement('button');
-
-                    // Material 3 styling with proper colors
-                    const colorClasses = {
-                        purple: 'bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg',
-                        emerald: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg',
-                        sky: 'bg-sky-600 hover:bg-sky-700 text-white shadow-md hover:shadow-lg',
-                    };
+                    const theme = getButtonTheme(btn.color);
 
                     button.className = 'editor-action-button';
+                    button.type = 'button';
+                    button.setAttribute('aria-label', btn.label);
                     button.style.cssText = `
                         display: inline-flex;
                         align-items: center;
-                        gap: 6px;
-                        padding: 8px 16px;
-                        border-radius: 16px;
-                        font-size: 13px;
-                        font-weight: 600;
+                        justify-content: center;
+                        gap: 7px;
+                        height: 28px;
+                        padding: 0 10px;
+                        border-radius: 8px;
+                        font-size: 12px;
+                        font-weight: 700;
                         font-family: 'Inter', sans-serif;
-                        border: none;
+                        letter-spacing: 0;
+                        color: #fff6ed;
+                        border: 1px solid rgba(255, 255, 255, 0.07);
+                        background: rgba(255, 255, 255, 0.045);
                         cursor: pointer;
-                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
                         transform-origin: center;
-                        ${btn.color === 'purple' ? 'background: #7c3aed; color: white;' : ''}
-                        ${btn.color === 'emerald' ? 'background: #059669; color: white;' : ''}
-                        ${btn.color === 'sky' ? 'background: #0284c7; color: white;' : ''}
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
                     `;
 
-                    // Icon + Label
-                    button.innerHTML = `
-                        <span style="font-size: 14px; line-height: 1;">${btn.icon || ''}</span>
-                        <span style="line-height: 1;">${btn.label}</span>
+                    const dot = document.createElement('span');
+                    dot.setAttribute('aria-hidden', 'true');
+                    dot.style.cssText = `
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 999px;
+                        background: ${theme.accent};
+                        box-shadow: 0 0 12px ${theme.glow};
+                        flex: 0 0 auto;
                     `;
 
-                    // Hover effects
+                    const label = document.createElement('span');
+                    label.textContent = btn.label;
+                    label.style.cssText = `
+                        line-height: 1;
+                        white-space: nowrap;
+                    `;
+
+                    button.appendChild(dot);
+                    button.appendChild(label);
+
                     button.onmouseenter = () => {
-                        button.style.transform = 'scale(1.05) translateY(-1px)';
-                        if (btn.color === 'purple') button.style.background = '#6d28d9';
-                        if (btn.color === 'emerald') button.style.background = '#047857';
-                        if (btn.color === 'sky') button.style.background = '#0369a1';
-                        button.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        button.style.transform = 'translateY(-1px)';
+                        button.style.background = 'rgba(255, 255, 255, 0.075)';
+                        button.style.borderColor = theme.accent;
+                        button.style.boxShadow = `0 8px 22px rgba(0, 0, 0, 0.28), 0 0 0 1px ${theme.glow}`;
+                        dot.style.background = theme.hoverAccent;
                     };
 
                     button.onmouseleave = () => {
-                        button.style.transform = 'scale(1) translateY(0)';
-                        if (btn.color === 'purple') button.style.background = '#7c3aed';
-                        if (btn.color === 'emerald') button.style.background = '#059669';
-                        if (btn.color === 'sky') button.style.background = '#0284c7';
-                        button.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                        button.style.transform = 'translateY(0)';
+                        button.style.background = 'rgba(255, 255, 255, 0.045)';
+                        button.style.borderColor = 'rgba(255, 255, 255, 0.07)';
+                        button.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.04)';
+                        dot.style.background = theme.accent;
                     };
 
                     button.onmousedown = () => {
-                        button.style.transform = 'scale(0.95)';
+                        button.style.transform = 'translateY(0) scale(0.98)';
                     };
 
                     button.onmouseup = () => {
-                        button.style.transform = 'scale(1.05) translateY(-1px)';
+                        button.style.transform = 'translateY(-1px)';
                     };
 
                     button.onclick = (e) => {
                         e.stopPropagation();
-
-                        // Ripple effect
-                        const ripple = document.createElement('span');
-                        ripple.style.cssText = `
-                            position: absolute;
-                            border-radius: 50%;
-                            background: rgba(255, 255, 255, 0.6);
-                            width: 100px;
-                            height: 100px;
-                            margin-top: -50px;
-                            margin-left: -50px;
-                            animation: ripple 0.6s;
-                            pointer-events: none;
-                        `;
-                        button.style.position = 'relative';
-                        button.style.overflow = 'hidden';
-
-                        const rect = button.getBoundingClientRect();
-                        ripple.style.left = e.clientX - rect.left + 'px';
-                        ripple.style.top = e.clientY - rect.top + 'px';
-
-                        button.appendChild(ripple);
-                        setTimeout(() => ripple.remove(), 600);
-
                         btn.onClick();
                     };
 
                     this.domNode.appendChild(button);
                 });
-
-                // Add ripple animation
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes ripple {
-                        0% {
-                            transform: scale(0);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: scale(4);
-                            opacity: 0;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
             }
             return this.domNode;
         },
