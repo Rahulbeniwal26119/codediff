@@ -1,9 +1,11 @@
-import { useParams } from 'react-router-dom';
-import { useEffect, useMemo, useCallback, lazy, Suspense, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useCallback, lazy, Suspense, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import {
     FaArrowRight,
+    FaCheckCircle,
     FaCompress,
+    FaCodeBranch,
     FaColumns,
     FaExpand,
     FaFileUpload,
@@ -11,12 +13,10 @@ import {
 } from 'react-icons/fa';
 import { useCode } from '../context/CodeContext';
 import LoadingSpinner from './LoadingSpinner';
-import Controls from './Controls';
-import Button from './ui/Button';
 import { getLanguageDisplayName, getMonacoLanguageId } from '../utils/monacoLanguages';
-import { createOverlayToolbar } from '../utils/editorWidgets';
 import ExecutionResultModal from './ExecutionResultModal';
-import { formatCode, canFormatLanguage } from '../utils/codeFormatter';
+import PatchWorkbench from './PatchWorkbench';
+import { formatCode } from '../utils/codeFormatter';
 import { getJsonSemanticSummary } from '../utils/jsonSemanticDiff';
 import { cn } from '../utils/cn';
 
@@ -51,12 +51,19 @@ export default function CodeEditor() {
     } = useCode();
 
     const { diffId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [executionResult, setExecutionResult] = useState(null);
     const [executionType, setExecutionType] = useState(null); // 'success' | 'error'
     const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
     const [activeEditorSide, setActiveEditorSide] = useState('after');
     const [semanticFilter, setSemanticFilter] = useState('all');
     const [semanticModalFilter, setSemanticModalFilter] = useState(null);
+    const [workbenchMode, setWorkbenchMode] = useState(location.pathname === '/patch' ? 'patch' : 'compare');
+    const patchSourceFromUrl = useMemo(() => {
+        const params = new URLSearchParams(location.search);
+        return params.get('source') || '';
+    }, [location.search]);
 
     const comparisonStats = useMemo(() => {
         const getLineCount = (value) => value ? value.split(/\r\n|\r|\n/).length : 0;
@@ -178,13 +185,20 @@ export default function CodeEditor() {
         contextmenu: true,
     }), []);
 
+    const editorViewStateRef = useRef({
+        original: null,
+        modified: null,
+        focusedSide: null,
+        shouldRestore: false,
+    });
+
     // Debounced content handlers for better performance
     const handleLeftContentChange = useCallback((newValue) => {
-        setLeftContent(newValue);
+        setLeftContent((currentValue) => currentValue === newValue ? currentValue : newValue);
     }, [setLeftContent]);
 
     const handleRightContentChange = useCallback((newValue) => {
-        setRightContent(newValue);
+        setRightContent((currentValue) => currentValue === newValue ? currentValue : newValue);
     }, [setRightContent]);
 
     // Optimized fetch with AbortController and caching
@@ -251,14 +265,14 @@ export default function CodeEditor() {
             }
         };
 
-        if (diffId) {
+        if (diffId && location.pathname !== '/patch') {
             fetchData();
         }
 
         return () => {
             abortController.abort();
         };
-    }, [diffId, setLeftContent, setRightContent, setSelectedLanguage, setShowUpdateButton]);
+    }, [diffId, location.pathname, setLeftContent, setRightContent, setSelectedLanguage, setShowUpdateButton]);
 
 
     const handleExecute = useCallback((code, lang) => {
@@ -292,7 +306,6 @@ export default function CodeEditor() {
             }
         }
         setIsExecutionModalOpen(true);
-        setIsExecutionModalOpen(true);
     }, []);
 
     const handleFormat = useCallback(async (code, lang, setContent) => {
@@ -308,6 +321,12 @@ export default function CodeEditor() {
 
     const [editorInstance, setEditorInstance] = useState(null);
 
+    useEffect(() => {
+        if (workbenchMode !== 'compare' || isFullscreen) {
+            setEditorInstance(null);
+        }
+    }, [workbenchMode, isFullscreen]);
+
     // Optimized editor mount handler
     const handleEditorMount = useCallback((editor) => {
         setEditorInstance(editor);
@@ -318,18 +337,33 @@ export default function CodeEditor() {
         // Debounced change handlers
         let leftTimeout, rightTimeout;
 
+        const saveViewStateForReactSync = () => {
+            editorViewStateRef.current = {
+                original: originalEditor.saveViewState(),
+                modified: modifiedEditor.saveViewState(),
+                focusedSide: originalEditor.hasTextFocus()
+                    ? 'original'
+                    : modifiedEditor.hasTextFocus()
+                        ? 'modified'
+                        : null,
+                shouldRestore: true,
+            };
+        };
+
         originalEditor.onDidChangeModelContent(() => {
             clearTimeout(leftTimeout);
             leftTimeout = setTimeout(() => {
+                saveViewStateForReactSync();
                 handleLeftContentChange(originalEditor.getValue());
-            }, 300); // 300ms debounce
+            }, 650);
         });
 
         modifiedEditor.onDidChangeModelContent(() => {
             clearTimeout(rightTimeout);
             rightTimeout = setTimeout(() => {
+                saveViewStateForReactSync();
                 handleRightContentChange(modifiedEditor.getValue());
-            }, 300); // 300ms debounce
+            }, 650);
         });
 
         // Cleanup
@@ -339,87 +373,47 @@ export default function CodeEditor() {
         };
     }, [handleLeftContentChange, handleRightContentChange]);
 
+    useEffect(() => {
+        if (!editorInstance || workbenchMode !== 'compare' || isFullscreen) return;
+        if (!editorViewStateRef.current.shouldRestore) return;
+
+        const restoreViewState = () => {
+            const originalEditor = editorInstance.getOriginalEditor();
+            const modifiedEditor = editorInstance.getModifiedEditor();
+            const { original, modified, focusedSide } = editorViewStateRef.current;
+
+            if (original) originalEditor.restoreViewState(original);
+            if (modified) modifiedEditor.restoreViewState(modified);
+            if (focusedSide === 'original') originalEditor.focus();
+            if (focusedSide === 'modified') modifiedEditor.focus();
+
+            editorViewStateRef.current.shouldRestore = false;
+        };
+
+        const frameId = requestAnimationFrame(restoreViewState);
+        const timeoutId = setTimeout(restoreViewState, 0);
+
+        return () => {
+            cancelAnimationFrame(frameId);
+            clearTimeout(timeoutId);
+        };
+    }, [leftContent, rightContent, editorInstance, workbenchMode, isFullscreen]);
+
     // Trigger layout when view mode changes - Safe now that we don't force remount
     useEffect(() => {
-        if (editorInstance) {
+        if (editorInstance && workbenchMode === 'compare' && !isFullscreen) {
             setTimeout(() => {
                 editorInstance.layout();
             }, 50);
         }
-    }, [isSideBySide, editorInstance]);
+    }, [isSideBySide, editorInstance, workbenchMode, isFullscreen]);
 
-    // Manage Widgets based on Language
-    useEffect(() => {
-        if (!editorInstance) return;
-
-        // Hide widgets in inline view
-        if (!isSideBySide) {
-            const originalEditor = editorInstance.getOriginalEditor();
-            const modifiedEditor = editorInstance.getModifiedEditor();
-            originalEditor.removeOverlayWidget({ getId: () => 'left-toolbar-widget' });
-            modifiedEditor.removeOverlayWidget({ getId: () => 'right-toolbar-widget' });
-            return;
-        }
-
-        const originalEditor = editorInstance.getOriginalEditor();
-        const modifiedEditor = editorInstance.getModifiedEditor();
-
-        // Helper to remove widgets
-        const removeWidgets = () => {
-            originalEditor.removeOverlayWidget({ getId: () => 'left-toolbar-widget' });
-            modifiedEditor.removeOverlayWidget({ getId: () => 'right-toolbar-widget' });
-        };
-
-        // Remove existing first
-        removeWidgets();
-
-        const getButtons = (editor, setContent) => {
-            const buttons = [];
-
-            // Format Button - Purple (Primary brand color)
-            if (canFormatLanguage(selectedLanguage)) {
-                buttons.push({
-                    label: 'Format',
-                    icon: '✨',
-                    color: 'purple',
-                    onClick: () => handleFormat(editor.getValue(), selectedLanguage, setContent)
-                });
-            }
-
-            // Execute/Validate Button
-            if (selectedLanguage === 'javascript' || selectedLanguage === 'json') {
-                const isJS = selectedLanguage === 'javascript';
-                buttons.push({
-                    label: isJS ? 'Execute' : 'Validate',
-                    icon: isJS ? '▶' : '✓',
-                    color: isJS ? 'emerald' : 'sky', // Emerald for execute, Sky for validate
-                    onClick: () => handleExecute(editor.getValue(), selectedLanguage)
-                });
-            }
-
-            return buttons;
-        };
-
-        const leftButtons = getButtons(originalEditor, setLeftContent);
-        const rightButtons = getButtons(modifiedEditor, setRightContent);
-
-        if (leftButtons.length > 0) {
-            const leftWidget = createOverlayToolbar(originalEditor, 'left-toolbar-widget', leftButtons);
-            originalEditor.addOverlayWidget(leftWidget);
-        }
-
-        if (rightButtons.length > 0) {
-            const rightWidget = createOverlayToolbar(modifiedEditor, 'right-toolbar-widget', rightButtons);
-            modifiedEditor.addOverlayWidget(rightWidget);
-        }
-
-        // Cleanup on unmount or change
-        return () => {
-            removeWidgets();
-        };
-    }, [editorInstance, selectedLanguage, handleExecute, handleFormat, setLeftContent, setRightContent, isSideBySide]);
-
-    const uploadButtonClass = 'flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-xs font-bold';
+    const uploadButtonClass = cn(
+        'flex h-8 min-w-[86px] cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-xs font-bold transition',
+        isDarkTheme
+            ? 'border-[#2f241d] bg-[#17120f] text-[#fff3e8] hover:border-[#ff7a1a]/50 hover:bg-[#1f1712]'
+            : 'border-[#ead8ca] bg-white text-[#17120f] hover:border-[#ff7a1a]/50'
+    );
     const borderClass = isDarkTheme ? 'border-[#2b211b]' : 'border-[#e5ded8]';
     const workbenchBg = isDarkTheme ? 'bg-[#100d0b]' : 'bg-[#fffaf6]';
     const panelBg = isDarkTheme ? 'bg-[#15110e]' : 'bg-white';
@@ -441,6 +435,42 @@ export default function CodeEditor() {
         ['Arrays', jsonSemanticSummary.counts.arrayLength, '#4da3ff', 'arrayLength'],
     ] : [];
 
+    const openCompareMode = useCallback(() => {
+        setWorkbenchMode('compare');
+        if (location.pathname === '/patch') {
+            navigate('/', { replace: false });
+        }
+    }, [location.pathname, navigate]);
+
+    const openPatchMode = useCallback(() => {
+        setWorkbenchMode('patch');
+        if (location.pathname !== '/patch') {
+            navigate(`/patch${location.search || ''}`, { replace: false });
+        }
+    }, [location.pathname, location.search, navigate]);
+
+    const updatePatchSourceUrl = useCallback((nextSource) => {
+        const normalizedSource = nextSource.trim();
+        const params = new URLSearchParams(location.search);
+
+        if (normalizedSource) {
+            params.set('source', normalizedSource);
+        } else {
+            params.delete('source');
+        }
+
+        const nextSearch = params.toString();
+        navigate(`/patch${nextSearch ? `?${nextSearch}` : ''}`, { replace: true });
+    }, [location.search, navigate]);
+
+    useEffect(() => {
+        if (location.pathname === '/patch') {
+            setWorkbenchMode('patch');
+        } else if (workbenchMode === 'patch') {
+            setWorkbenchMode('compare');
+        }
+    }, [location.pathname, workbenchMode]);
+
     return (
         <div
             className={cn(
@@ -457,18 +487,18 @@ export default function CodeEditor() {
             }}
         >
             <div className={cn(
-                'mx-auto flex min-h-0 w-full max-w-[1500px] flex-1 flex-col px-3 py-3 sm:px-5 sm:py-4',
+                'mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3',
                 isFullscreen ? 'editor-focus-enter h-full max-w-none p-0 sm:p-0' : ''
             )}>
                 <div className={cn(
-                    'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border shadow-[0_24px_80px_rgba(0,0,0,0.28)]',
+                    'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border shadow-[0_24px_80px_rgba(0,0,0,0.24)]',
                     borderClass,
                     workbenchBg,
                     isFullscreen ? 'h-full rounded-none border-0' : ''
                 )}>
                     {!isFullscreen && (
                         <div className={cn(
-                            'flex flex-col gap-3 border-b px-4 py-2.5 lg:flex-row lg:items-center lg:justify-between',
+                            'flex flex-col gap-2 border-b px-3 py-2 lg:flex-row lg:items-center lg:justify-between',
                             borderClass
                         )}>
                             <div className="flex min-w-0 items-center gap-3">
@@ -478,18 +508,29 @@ export default function CodeEditor() {
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h1 className={cn('truncate text-lg font-bold tracking-normal', primaryText)}>
-                                            {getLanguageDisplayName(selectedLanguage)} diff
+                                            {workbenchMode === 'patch' ? 'Patch review' : `${getLanguageDisplayName(selectedLanguage)} diff`}
                                         </h1>
                                         <span className="rounded-full border border-[#ff7a1a]/30 bg-[#ff7a1a]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#ff9a3d]">
-                                            Live
+                                            {workbenchMode === 'patch' ? 'Beta' : 'Live'}
                                         </span>
                                     </div>
                                     <div className={cn('mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold', mutedText)}>
-                                        <span className="h-1.5 w-1.5 rounded-full bg-[#4da3ff]" />
-                                        <span>Before</span>
-                                        <FaArrowRight className="h-3 w-3 text-[#ff7a1a]" />
-                                        <span className="h-1.5 w-1.5 rounded-full bg-[#45d483]" />
-                                        <span>After</span>
+                                        {workbenchMode === 'patch' ? (
+                                            <>
+                                                <FaCodeBranch className="h-3 w-3 text-[#ff7a1a]" />
+                                                <span>Import patches</span>
+                                                <FaArrowRight className="h-3 w-3 text-[#ff7a1a]" />
+                                                <span>Review hunks</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="h-1.5 w-1.5 rounded-full bg-[#4da3ff]" />
+                                                <span>Before</span>
+                                                <FaArrowRight className="h-3 w-3 text-[#ff7a1a]" />
+                                                <span className="h-1.5 w-1.5 rounded-full bg-[#45d483]" />
+                                                <span>After</span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -499,7 +540,29 @@ export default function CodeEditor() {
                                 borderClass,
                                 subtleBg
                             )}>
-                                <Controls compact />
+                                <div className={cn('grid h-9 grid-cols-2 rounded-lg border p-1', borderClass, workbenchBg)}>
+                                    <button
+                                        type="button"
+                                        onClick={openCompareMode}
+                                        className={cn(
+                                            'rounded-md px-2 text-xs font-black transition',
+                                            workbenchMode === 'compare' ? 'bg-[#ff7a1a] text-white shadow-[0_0_18px_rgba(255,122,26,0.22)]' : mutedText
+                                        )}
+                                    >
+                                        Compare
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={openPatchMode}
+                                        className={cn(
+                                            'flex items-center justify-center gap-1.5 rounded-md px-2 text-xs font-black transition',
+                                            workbenchMode === 'patch' ? 'bg-[#ff7a1a] text-white shadow-[0_0_18px_rgba(255,122,26,0.22)]' : mutedText
+                                        )}
+                                    >
+                                        <FaCodeBranch className="h-3 w-3" />
+                                        Patch
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsFullscreen(true)}
@@ -513,9 +576,9 @@ export default function CodeEditor() {
                         </div>
                     )}
 
-                    {!isFullscreen && (
+                    {!isFullscreen && workbenchMode === 'compare' && (
                         <div className={cn(
-                            'grid gap-2 border-b p-2.5 md:grid-cols-[190px_128px_210px]',
+                            'grid gap-2 border-b p-2 md:grid-cols-[180px_116px_196px]',
                             borderClass
                         )}>
                             <label className="min-w-0">
@@ -583,14 +646,10 @@ export default function CodeEditor() {
                                         className="hidden"
                                     />
                                     <label htmlFor="leftFileInput">
-                                        <Button
-                                            as="span"
-                                            size="md"
-                                            className={cn(uploadButtonClass, 'bg-[#7c3aed] hover:bg-[#6d28d9]')}
-                                        >
+                                        <span className={uploadButtonClass}>
                                             <FaFileUpload className="h-3.5 w-3.5" />
                                             Before
-                                        </Button>
+                                        </span>
                                     </label>
 
                                     <input
@@ -601,14 +660,10 @@ export default function CodeEditor() {
                                         className="hidden"
                                     />
                                     <label htmlFor="rightFileInput">
-                                        <Button
-                                            as="span"
-                                            size="md"
-                                            className={cn(uploadButtonClass, 'bg-[#7c3aed] hover:bg-[#6d28d9]')}
-                                        >
+                                        <span className={uploadButtonClass}>
                                             <FaFileUpload className="h-3.5 w-3.5" />
                                             After
-                                        </Button>
+                                        </span>
                                     </label>
                                 </div>
                             </div>
@@ -681,6 +736,44 @@ export default function CodeEditor() {
                                     </button>
                                 </div>
 
+                                <div className="hidden items-center gap-1.5 lg:flex">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFormat(
+                                            activeEditorSide === 'before' ? leftContent : rightContent,
+                                            selectedLanguage,
+                                            activeEditorSide === 'before' ? setLeftContent : setRightContent
+                                        )}
+                                        className={cn(
+                                            'flex h-8 items-center gap-2 rounded-lg border px-2.5 text-xs font-bold transition hover:border-[#ff7a1a]/50',
+                                            borderClass,
+                                            panelBg,
+                                            primaryText
+                                        )}
+                                    >
+                                        <span className="h-1.5 w-1.5 rounded-full bg-[#ff7a1a]" />
+                                        Format
+                                    </button>
+                                    {(selectedLanguage === 'json' || selectedLanguage === 'javascript') && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleExecute(
+                                                activeEditorSide === 'before' ? leftContent : rightContent,
+                                                selectedLanguage
+                                            )}
+                                            className={cn(
+                                                'flex h-8 items-center gap-2 rounded-lg border px-2.5 text-xs font-bold transition hover:border-[#45d483]/50',
+                                                borderClass,
+                                                panelBg,
+                                                primaryText
+                                            )}
+                                        >
+                                            <FaCheckCircle className="h-3 w-3 text-[#45d483]" />
+                                            {selectedLanguage === 'javascript' ? 'Run' : 'Validate'}
+                                        </button>
+                                    )}
+                                </div>
+
                                 <div className="hidden items-center gap-2 md:flex">
                                     <input
                                         id="leftFileInputFocus"
@@ -690,14 +783,10 @@ export default function CodeEditor() {
                                         className="hidden"
                                     />
                                     <label htmlFor="leftFileInputFocus">
-                                        <Button
-                                            as="span"
-                                            size="sm"
-                                            className="flex h-8 cursor-pointer items-center gap-2 rounded-lg bg-[#7c3aed] px-2.5 text-xs font-bold hover:bg-[#6d28d9]"
-                                        >
+                                        <span className={uploadButtonClass}>
                                             <FaFileUpload className="h-3 w-3" />
                                             Before
-                                        </Button>
+                                        </span>
                                     </label>
                                     <input
                                         id="rightFileInputFocus"
@@ -707,22 +796,15 @@ export default function CodeEditor() {
                                         className="hidden"
                                     />
                                     <label htmlFor="rightFileInputFocus">
-                                        <Button
-                                            as="span"
-                                            size="sm"
-                                            className="flex h-8 cursor-pointer items-center gap-2 rounded-lg bg-[#7c3aed] px-2.5 text-xs font-bold hover:bg-[#6d28d9]"
-                                        >
+                                        <span className={uploadButtonClass}>
                                             <FaFileUpload className="h-3 w-3" />
                                             After
-                                        </Button>
+                                        </span>
                                     </label>
                                 </div>
                             </div>
 
                             <div className="flex shrink-0 items-center gap-2">
-                                <div className="hidden sm:flex">
-                                    <Controls compact />
-                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsFullscreen(false)}
@@ -736,12 +818,26 @@ export default function CodeEditor() {
                         </div>
                     )}
 
+                    {!isFullscreen && workbenchMode === 'patch' ? (
+                        <div className="min-h-0 flex-1 overflow-hidden">
+                            <PatchWorkbench
+                                isDarkTheme={isDarkTheme}
+                                borderClass={borderClass}
+                                panelBg={panelBg}
+                                subtleBg={subtleBg}
+                                primaryText={primaryText}
+                                mutedText={mutedText}
+                                initialSourceUrl={patchSourceFromUrl}
+                                onSourceUrlChange={updatePatchSourceUrl}
+                            />
+                        </div>
+                    ) : (
                     <div className={cn(
-                        'grid min-h-0 flex-1 gap-3 p-3',
-                        isFullscreen ? 'h-full p-0' : 'xl:grid-cols-[minmax(0,1fr)_220px]'
+                        'grid min-h-0 flex-1 gap-2 p-2',
+                        isFullscreen ? 'h-full p-0' : 'xl:grid-cols-[minmax(0,1fr)_184px]'
                     )}>
                 <section className={cn(
-                    'flex min-h-[600px] min-w-0 flex-col overflow-hidden rounded-2xl border shadow-[0_18px_60px_rgba(0,0,0,0.24)]',
+                    'flex min-h-[680px] min-w-0 flex-col overflow-hidden rounded-xl border shadow-[0_18px_60px_rgba(0,0,0,0.20)]',
                     borderClass,
                     editorShellBg,
                     isFullscreen ? 'h-full min-h-0 rounded-none border-0 shadow-none' : ''
@@ -824,185 +920,117 @@ export default function CodeEditor() {
                 </section>
 
                 {!isFullscreen && (
-                    <aside className={cn(
-                        'hidden min-h-0 flex-col gap-2.5 xl:flex'
-                    )}>
+                    <aside className="hidden min-h-0 flex-col gap-2 xl:flex">
                         {jsonSemanticSummary ? (
-                            <>
-                                <div className={cn(
-                                    'rounded-2xl p-3.5 text-white shadow-[0_18px_42px_rgba(255,122,26,0.28)]',
-                                    jsonSemanticSummary.valid
-                                        ? 'bg-gradient-to-br from-[#ff9a3d] via-[#ff7a1a] to-[#ef4444]'
-                                        : 'bg-gradient-to-br from-[#ef4444] to-[#7f1d1d]'
-                                )}>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
-                                        JSON Review
-                                    </p>
-                                    <p className="mt-2 text-4xl font-black">
-                                        {jsonSemanticSummary.valid ? jsonSemanticSummary.counts.total : '!' }
-                                    </p>
-                                    <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-white/75">
-                                        {jsonSemanticSummary.valid ? 'Semantic changes' : 'Invalid JSON'}
-                                    </p>
-                                    {jsonSemanticSummary.valid && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setSemanticModalFilter('all')}
-                                            className="mt-3 rounded-full bg-white/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/25"
-                                        >
-                                            View details
-                                        </button>
-                                    )}
-                                </div>
+                            jsonSemanticSummary.valid ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSemanticModalFilter('all')}
+                                        className="group rounded-xl bg-gradient-to-br from-[#ff8a1f] to-[#ef4444] p-3 text-left text-white shadow-[0_14px_34px_rgba(255,122,26,0.20)] transition hover:translate-y-[-1px] hover:shadow-[0_20px_44px_rgba(255,122,26,0.28)]"
+                                    >
+                                        <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">
+                                            JSON review
+                                        </span>
+                                        <span className="mt-2 flex items-end justify-between gap-3">
+                                            <span className="font-mono text-4xl font-black leading-none">
+                                                {jsonSemanticSummary.counts.total}
+                                            </span>
+                                            <span className="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] transition group-hover:bg-white/25">
+                                                Details
+                                            </span>
+                                        </span>
+                                    </button>
 
-                                {jsonSemanticSummary.valid ? (
-                                    <>
-                                        <div className={cn('rounded-2xl border p-2 shadow-sm', borderClass, panelBg)}>
-                                            <div className="grid grid-cols-2 gap-1.5">
-                                                {semanticFilters.map(([label, value, color, type]) => (
-                                                    <button
-                                                        key={type}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSemanticFilter(type);
-                                                            setSemanticModalFilter(type);
-                                                        }}
-                                                        className={cn(
-                                                            'rounded-xl border px-2.5 py-2 text-left transition',
-                                                            semanticFilter === type
-                                                                ? 'border-[#ff7a1a]/70 bg-[#ff7a1a]/10'
-                                                                : isDarkTheme ? 'border-[#2b211b] bg-[#0c0a08] hover:border-[#ff7a1a]/40' : 'border-[#e5ded8] bg-[#f7f3ef] hover:border-[#ff7a1a]/40'
-                                                        )}
-                                                    >
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <span className={cn('truncate text-[9px] font-black uppercase tracking-[0.13em]', mutedText)}>
-                                                                {label}
-                                                            </span>
-                                                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-                                                        </div>
-                                                        <span className={cn('mt-1 block font-mono text-lg font-black', primaryText)}>
-                                                            {value}
+                                    <div className={cn('rounded-xl border p-2', borderClass, panelBg)}>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            {semanticFilters.map(([label, value, color, type]) => (
+                                                <button
+                                                    key={type}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSemanticFilter(type);
+                                                        setSemanticModalFilter(type);
+                                                    }}
+                                                    className={cn(
+                                                        'min-h-[56px] rounded-lg border p-2 text-left transition hover:border-[#ff7a1a]/45',
+                                                        semanticFilter === type
+                                                            ? 'border-[#ff7a1a]/70 bg-[#ff7a1a]/10'
+                                                            : isDarkTheme ? 'border-[#2b211b] bg-[#0b0907]' : 'border-[#e5ded8] bg-[#fffaf6]'
+                                                    )}
+                                                >
+                                                    <span className="flex items-center justify-between gap-2">
+                                                        <span className={cn('truncate text-[8px] font-black uppercase tracking-[0.13em]', mutedText)}>
+                                                            {label}
                                                         </span>
-                                                    </button>
-                                                ))}
-                                            </div>
+                                                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                                    </span>
+                                                    <span className={cn('mt-1 block font-mono text-base font-black', primaryText)}>
+                                                        {value}
+                                                    </span>
+                                                </button>
+                                            ))}
                                         </div>
+                                    </div>
 
-                                        <div className={cn('min-h-0 flex-1 rounded-2xl border p-3 shadow-sm', borderClass, panelBg)}>
-                                            <div className="flex items-center justify-between gap-3">
-                                                <span className={cn('text-[10px] font-black uppercase tracking-[0.16em]', mutedText)}>
-                                                    {semanticFilter === 'all' ? 'Changed paths' : `${semanticFilter} paths`}
-                                                </span>
-                                                <span className={cn('font-mono text-xs font-black', primaryText)}>
-                                                    {visibleSemanticChanges.length}
-                                                </span>
-                                            </div>
-
-                                            <div className={cn(
-                                                'mt-3 space-y-2 overflow-y-auto pr-1',
-                                                'max-h-[28rem]'
-                                            )}>
-                                                {visibleSemanticChanges.length === 0 ? (
-                                                    <p className={cn('text-xs font-semibold', mutedText)}>
-                                                        No changes in this category.
-                                                    </p>
-                                                ) : (
-                                                    visibleSemanticChanges.slice(0, 20).map((change, index) => (
-                                                    <div
-                                                        key={`${change.type}-${change.path}-${index}`}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onClick={() => setSemanticModalFilter(change.type)}
-                                                        onKeyDown={(event) => {
-                                                            if (event.key === 'Enter' || event.key === ' ') {
-                                                                setSemanticModalFilter(change.type);
-                                                            }
-                                                        }}
-                                                        className={cn(
-                                                            'cursor-pointer rounded-xl border p-2 transition hover:border-[#ff7a1a]/45',
-                                                            isDarkTheme ? 'border-[#2b211b] bg-[#0c0a08]' : 'border-[#e5ded8] bg-[#f7f3ef]'
-                                                        )}
-                                                    >
-                                                            <div className="flex items-center justify-between gap-2">
-                                                            <span className="min-w-0 truncate font-mono text-[11px] font-black text-[#ff9a3d]">
-                                                                {change.path}
-                                                            </span>
-                                                                <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase', {
-                                                                    'bg-[#45d483]/15 text-[#45d483]': change.type === 'added',
-                                                                    'bg-[#ef4444]/15 text-[#ef4444]': change.type === 'removed',
-                                                                    'bg-[#ff7a1a]/15 text-[#ff9a3d]': change.type === 'changed',
-                                                                    'bg-[#8b5cf6]/15 text-[#a78bfa]': change.type === 'type',
-                                                                    'bg-[#4da3ff]/15 text-[#4da3ff]': change.type === 'arrayLength',
-                                                                })}>
-                                                                    {change.type}
-                                                                </span>
-                                                            </div>
-                                                            {(change.type === 'changed' || change.type === 'type' || change.type === 'arrayLength') && (
-                                                            <div className="mt-2 grid gap-1 font-mono text-[11px]">
-                                                                <span className="truncate text-[#ef9a9a]">
-                                                                    - {change.type === 'type' ? change.beforeType : formatSemanticValue(change.before)}
-                                                                </span>
-                                                                <span className="truncate text-[#8ee6ae]">
-                                                                    + {change.type === 'type' ? change.afterType : formatSemanticValue(change.after)}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        {change.type === 'added' && (
-                                                            <p className="mt-2 truncate font-mono text-[11px] text-[#8ee6ae]">
-                                                                + {formatSemanticValue(change.after)}
-                                                            </p>
-                                                        )}
-                                                        {change.type === 'removed' && (
-                                                            <p className="mt-2 truncate font-mono text-[11px] text-[#ef9a9a]">
-                                                                - {formatSemanticValue(change.before)}
-                                                            </p>
-                                                        )}
-                                                        </div>
-                                                    ))
-                                                )}
-                                                {visibleSemanticChanges.length > 20 && (
-                                                    <p className={cn('text-[11px] font-semibold', mutedText)}>
-                                                        +{visibleSemanticChanges.length - 20} more paths
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    [
-                                        ['Before JSON', jsonSemanticSummary.beforeValid ? 'Valid' : 'Invalid', jsonSemanticSummary.beforeValid ? '#45d483' : '#ef4444'],
-                                        ['After JSON', jsonSemanticSummary.afterValid ? 'Valid' : 'Invalid', jsonSemanticSummary.afterValid ? '#45d483' : '#ef4444'],
+                                    <button
+                                        type="button"
+                                        onClick={() => setSemanticModalFilter(semanticFilter)}
+                                        className={cn(
+                                            'rounded-xl border px-3 py-2.5 text-left transition hover:border-[#ff7a1a]/45',
+                                            borderClass,
+                                            panelBg
+                                        )}
+                                    >
+                                        <span className={cn('text-[9px] font-black uppercase tracking-[0.16em]', mutedText)}>
+                                            {semanticFilter === 'all' ? 'Changed paths' : `${semanticFilter} paths`}
+                                        </span>
+                                        <span className={cn('mt-1 flex items-center justify-between font-mono text-lg font-black', primaryText)}>
+                                            {visibleSemanticChanges.length}
+                                            <FaArrowRight className="h-3 w-3 text-[#ff7a1a]" />
+                                        </span>
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="rounded-xl bg-gradient-to-br from-[#ef4444] to-[#7f1d1d] p-3 text-white">
+                                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">JSON review</p>
+                                        <p className="mt-2 text-3xl font-black">!</p>
+                                        <p className="mt-1 text-[11px] font-bold text-white/80">Invalid JSON</p>
+                                    </div>
+                                    {[
+                                        ['Before', jsonSemanticSummary.beforeValid ? 'Valid' : 'Invalid', jsonSemanticSummary.beforeValid ? '#45d483' : '#ef4444'],
+                                        ['After', jsonSemanticSummary.afterValid ? 'Valid' : 'Invalid', jsonSemanticSummary.afterValid ? '#45d483' : '#ef4444'],
                                     ].map(([label, value, color]) => (
-                                        <div key={label} className={cn('rounded-2xl border p-3 shadow-sm', borderClass, panelBg)}>
+                                        <div key={label} className={cn('rounded-xl border p-3', borderClass, panelBg)}>
                                             <div className="flex items-center justify-between gap-3">
-                                                <span className={cn('text-[10px] font-black uppercase tracking-[0.16em]', mutedText)}>{label}</span>
-                                                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
+                                                <span className={cn('text-[9px] font-black uppercase tracking-[0.16em]', mutedText)}>{label}</span>
+                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
                                             </div>
                                             <span className={cn('mt-2 block text-sm font-black', primaryText)}>{value}</span>
                                         </div>
-                                    ))
-                                )}
-                            </>
+                                    ))}
+                                </>
+                            )
                         ) : (
                             <>
-                                <div className="rounded-2xl bg-gradient-to-br from-[#ff9a3d] via-[#ff7a1a] to-[#ef4444] p-3.5 text-white shadow-[0_18px_42px_rgba(255,122,26,0.28)]">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">Review</p>
-                                    <p className="mt-2 text-4xl font-black">{comparisonStats.deltaChars >= 0 ? '+' : ''}{comparisonStats.deltaChars}</p>
-                                    <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-white/75">Character delta</p>
+                                <div className="rounded-xl bg-gradient-to-br from-[#ff8a1f] to-[#ef4444] p-3 text-white shadow-[0_14px_34px_rgba(255,122,26,0.20)]">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">Review</p>
+                                    <p className="mt-2 font-mono text-4xl font-black leading-none">{comparisonStats.deltaChars >= 0 ? '+' : ''}{comparisonStats.deltaChars}</p>
+                                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-white/75">Character delta</p>
                                 </div>
 
                                 {[
-                                    ['Before lines', comparisonStats.beforeLines, '#4da3ff'],
-                                    ['After lines', comparisonStats.afterLines, '#45d483'],
-                                    ['Before chars', comparisonStats.beforeChars, '#ff7a1a'],
-                                    ['After chars', comparisonStats.afterChars, '#8b5cf6'],
+                                    ['Before', comparisonStats.beforeLines, '#4da3ff'],
+                                    ['After', comparisonStats.afterLines, '#45d483'],
+                                    ['Chars', comparisonStats.afterChars, '#ff7a1a'],
                                 ].map(([label, value, color]) => (
-                                    <div key={label} className={cn('rounded-2xl border p-3 shadow-sm', borderClass, panelBg)}>
+                                    <div key={label} className={cn('rounded-xl border p-3', borderClass, panelBg)}>
                                         <div className="flex items-center justify-between gap-3">
-                                            <span className={cn('text-[10px] font-black uppercase tracking-[0.16em]', mutedText)}>{label}</span>
-                                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
+                                            <span className={cn('text-[9px] font-black uppercase tracking-[0.16em]', mutedText)}>{label}</span>
+                                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
                                         </div>
-                                        <span className={cn('mt-2 block font-mono text-2xl font-black', primaryText)}>{value}</span>
+                                        <span className={cn('mt-2 block font-mono text-xl font-black', primaryText)}>{value}</span>
                                     </div>
                                 ))}
                             </>
@@ -1010,6 +1038,7 @@ export default function CodeEditor() {
                     </aside>
                 )}
                     </div>
+                    )}
                 </div>
             </div>
 

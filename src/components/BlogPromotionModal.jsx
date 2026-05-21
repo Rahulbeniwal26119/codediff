@@ -1,5 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { FaArrowRight, FaBookOpen, FaTimes } from 'react-icons/fa';
 import { useCode } from '../context/CodeContext';
+import { cn } from '../utils/cn';
+
+const STORAGE_KEY = 'codediffPromotionLastShown';
+
+const runWhenIdle = (callback) => {
+    if ('requestIdleCallback' in window) {
+        return window.requestIdleCallback(callback, { timeout: 8000 });
+    }
+
+    return window.setTimeout(callback, 1000);
+};
+
+const cancelIdleRun = (id) => {
+    if ('cancelIdleCallback' in window) {
+        window.cancelIdleCallback(id);
+        return;
+    }
+
+    window.clearTimeout(id);
+};
 
 export default function BlogPromotionModal() {
     const [isVisible, setIsVisible] = useState(false);
@@ -7,186 +28,137 @@ export default function BlogPromotionModal() {
     const { isDarkTheme } = useCode();
 
     useEffect(() => {
-        // Check if user has already seen the modal today
-        const lastShown = localStorage.getItem('blogModalLastShown');
+        const lastShown = localStorage.getItem(STORAGE_KEY);
         const today = new Date().toDateString();
-        
-        // Only show modal if user hasn't seen it today and after significant delay
-        if (lastShown !== today) {
-            // Show modal only after page is completely stable to prevent performance impact
-            const timer = setTimeout(() => {
-                // Check if page is idle and performance metrics are good
-                if (document.readyState === 'complete') {
-                    // Additional check for page stability
-                    requestIdleCallback(() => {
-                        console.log('Showing blog modal');
-                        setIsVisible(true);
-                    }, { timeout: 10000 });
-                } else {
-                    // Wait for page to be fully loaded
-                    window.addEventListener('load', () => {
-                        setTimeout(() => {
-                            requestIdleCallback(() => {
-                                setIsVisible(true);
-                            }, { timeout: 10000 });
-                        }, 3000);
-                    }, { once: true });
-                }
-            }, 10000); // Increased delay to 10 seconds to ensure page is stable
-            
-            return () => clearTimeout(timer);
-        }
+
+        if (lastShown === today) return undefined;
+
+        const timer = window.setTimeout(() => {
+            const idleId = runWhenIdle(() => setIsVisible(true));
+
+            window.setTimeout(() => cancelIdleRun(idleId), 9000);
+        }, 16000);
+
+        return () => window.clearTimeout(timer);
     }, []);
+
+    const rememberDismissal = () => {
+        localStorage.setItem(STORAGE_KEY, new Date().toDateString());
+    };
 
     const handleClose = () => {
         setIsClosing(true);
-        setTimeout(() => {
+        rememberDismissal();
+
+        window.setTimeout(() => {
             setIsVisible(false);
             setIsClosing(false);
-        }, 300);
-        
-        // Remember that user has seen the modal today
-        localStorage.setItem('blogModalLastShown', new Date().toDateString());
+        }, 220);
     };
 
-    const handleVisitBlog = () => {
-        window.open('https://takovibe.com/blog', '_blank');
+    const handleVisitTakoVibe = () => {
+        window.open('https://takovibe.com', '_blank', 'noopener,noreferrer');
         handleClose();
-    };
-
-    const handleBackdropClick = (e) => {
-        if (e.target === e.currentTarget) {
-            handleClose();
-        }
     };
 
     if (!isVisible) return null;
 
     return (
-        <div 
-            className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300 ${
-                isClosing ? 'opacity-0' : 'opacity-100'
-            }`}
-            style={{ 
-                backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                backdropFilter: 'blur(4px)'
-            }}
-            onClick={handleBackdropClick}
-        >
-            <div 
-                className={`relative max-w-lg w-full transform transition-all duration-300 ${
-                    isClosing ? 'blog-modal-exit' : 'blog-modal-enter'
-                } ${
-                    isDarkTheme 
-                        ? 'bg-gray-800 border-gray-700' 
-                        : 'bg-white border-gray-200'
-                } rounded-2xl border shadow-2xl overflow-hidden`}
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex justify-center p-3 sm:inset-x-auto sm:right-4 sm:justify-end sm:p-4">
+            <section
+                className={cn(
+                    'pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.45)] transition duration-200',
+                    isClosing ? 'translate-y-3 opacity-0' : 'translate-y-0 opacity-100',
+                    isDarkTheme
+                        ? 'border-[#35251b] bg-[#100d0b]/95 text-[#fff9f2]'
+                        : 'border-[#ead8ca] bg-[#fffaf6]/95 text-[#17120f]'
+                )}
+                role="dialog"
+                aria-label="TakoVibe promotion"
             >
-                {/* Close button */}
-                <button
-                    onClick={handleClose}
-                    type="button"
-                    className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:rotate-90 z-40 cursor-pointer ${
-                        isDarkTheme 
-                            ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={{ pointerEvents: 'auto' }}
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                {/* Modal content */}
-                <div className="p-8">
-                    {/* Header with icon */}
-                    <div className="text-center mb-6">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
-                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </div>
-                        <h2 className={`text-2xl font-bold mb-2 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                            🎉 My Blog is Live!
-                        </h2>
-                        <p className={`text-lg ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Discover amazing content on TakoVibe
-                        </p>
-                    </div>
-
-                    {/* Blog preview */}
-                    <div className={`rounded-xl p-4 mb-6 border ${
-                        isDarkTheme 
-                            ? 'bg-gray-700 border-gray-600' 
-                            : 'bg-gray-50 border-gray-200'
-                    }`}>
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">T</span>
+                <div className="border-b border-[#ff7a1a]/15 bg-gradient-to-r from-[#ff7a1a]/16 via-[#ff7a1a]/8 to-[#7c3aed]/12 px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#ff8a1f] to-[#7c3aed] text-sm font-black text-white shadow-[0_0_34px_rgba(255,122,26,0.24)]">
+                                TV
                             </div>
-                            <div>
-                                <h3 className={`font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-                                    TakoVibe Blogs
-                                </h3>
-                                <p className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    Tech insights & tutorials
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#ff9a3d]">
+                                    Built by TakoVibe
                                 </p>
+                                <h2 className="mt-0.5 truncate text-base font-black">
+                                    TakoVibe
+                                </h2>
                             </div>
                         </div>
-                        <p className={`text-sm leading-relaxed ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Explore in-depth articles about web development, programming tips, and the latest tech trends. 
-                            Join our growing community of developers and tech enthusiasts!
-                        </p>
-                    </div>
 
-                    {/* Action buttons */}
-                    <div className="flex gap-3 relative z-20">
                         <button
-                            onClick={handleVisitBlog}
                             type="button"
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer relative z-30"
-                            style={{ pointerEvents: 'auto' }}
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Visit Blog
-                        </button>
-                        <button
                             onClick={handleClose}
-                            type="button"
-                            className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer relative z-30 ${
-                                isDarkTheme
-                                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-                            }`}
-                            style={{ pointerEvents: 'auto' }}
+                            className={cn(
+                                'grid h-8 w-8 shrink-0 place-items-center rounded-lg transition',
+                                isDarkTheme ? 'text-[#9a9087] hover:bg-white/5 hover:text-white' : 'text-[#756a61] hover:bg-black/5 hover:text-[#17120f]'
+                            )}
+                            aria-label="Dismiss promotion"
                         >
-                            Maybe Later
+                            <FaTimes className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="p-4">
+                    <p className={cn('text-sm leading-6', isDarkTheme ? 'text-[#cfc4ba]' : 'text-[#675b52]')}>
+                        CodeDiff is one of the focused developer tools coming from TakoVibe. Explore product notes, dev workflows, and practical engineering ideas.
+                    </p>
+
+                    <div className="mt-3 grid grid-cols-3 gap-1.5">
+                        {['Dev tools', 'Build notes', 'Tutorials'].map((item) => (
+                            <span
+                                key={item}
+                                className={cn(
+                                    'rounded-lg border px-2 py-1.5 text-center text-[10px] font-black uppercase tracking-[0.08em]',
+                                    isDarkTheme
+                                        ? 'border-[#2b211b] bg-[#0c0a08] text-[#b7aca2]'
+                                        : 'border-[#ead8ca] bg-[#fff4eb] text-[#675b52]'
+                                )}
+                            >
+                                {item}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleVisitTakoVibe}
+                            className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-[#ff7a1a] px-3 text-xs font-black text-white shadow-[0_12px_28px_rgba(255,122,26,0.22)] transition hover:bg-[#ff8b33]"
+                        >
+                            Visit TakoVibe
+                            <FaArrowRight className="h-3 w-3" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className={cn(
+                                'h-9 rounded-lg px-3 text-xs font-bold transition',
+                                isDarkTheme ? 'text-[#b7aca2] hover:bg-white/5 hover:text-white' : 'text-[#675b52] hover:bg-black/5 hover:text-[#17120f]'
+                            )}
+                        >
+                            Not now
                         </button>
                     </div>
 
-                    {/* Bottom note */}
-                    <p className={`text-xs text-center mt-4 ${isDarkTheme ? 'text-gray-500' : 'text-gray-400'}`}>
-                        This message appears once per day
-                    </p>
+                    <div className={cn('mt-3 flex items-center justify-between gap-3 text-[10px] font-bold', isDarkTheme ? 'text-[#7d7168]' : 'text-[#8b7d72]')}>
+                        <span className="flex items-center gap-1.5">
+                            <FaBookOpen className="h-3 w-3 text-[#ff9a3d]" />
+                            New builder notes weekly
+                        </span>
+                        <span className="rounded-full border border-[#ff7a1a]/20 bg-[#ff7a1a]/10 px-2 py-0.5 text-[#ff9a3d]">
+                            takovibe.com
+                        </span>
+                    </div>
                 </div>
-
-                {/* Decorative elements */}
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-60 sparkle-animation"></div>
-                <div className="absolute -top-1 -right-3 w-3 h-3 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full opacity-40 sparkle-animation" style={{ animationDelay: '0.5s' }}></div>
-                <div className="absolute -bottom-2 -right-1 w-5 h-5 bg-gradient-to-br from-orange-400 to-red-500 rounded-full opacity-50 sparkle-animation" style={{ animationDelay: '1s' }}></div>
-                
-                {/* Background pattern */}
-                <div className="absolute inset-0 opacity-5">
-                    <div className="absolute inset-0" style={{ 
-                        backgroundImage: `radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), 
-                                         radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%), 
-                                         radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%)` 
-                    }}></div>
-                </div>
-            </div>
+            </section>
         </div>
     );
 }

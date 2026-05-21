@@ -10,6 +10,7 @@ root.render(
     <Routes>
       {/* Main routes */}
       <Route path="/" element={<App />} />
+      <Route path="/patch" element={<App />} />
       <Route path="/:diffId" element={<App />} />
 
       {/* SEO-friendly language-specific routes */}
@@ -50,4 +51,3 @@ root.render(
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-

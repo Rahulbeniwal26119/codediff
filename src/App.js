@@ -1,7 +1,6 @@
 import { Toaster } from 'react-hot-toast';
 import React, { useEffect, Suspense } from 'react';
 import './App.css';
-import Header from './components/Header';
 import CodeEditor from './components/CodeEditor';
 import BlogPromotionModal from './components/BlogPromotionModal';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -92,19 +91,34 @@ function AppContent({ language }) {
                 toastOptions={{
                     duration: 3000,
                     style: {
-                        background: isDarkTheme ? '#374151' : '#f9fafb',
-                        color: isDarkTheme ? '#f3f4f6' : '#111827',
-                        border: `1px solid ${isDarkTheme ? '#4b5563' : '#e5e7eb'}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        boxShadow: isDarkTheme 
-                            ? '0 10px 15px -3px rgba(0, 0, 0, 0.3)' 
-                            : '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        background: isDarkTheme ? 'rgba(16, 13, 11, 0.96)' : 'rgba(255, 250, 246, 0.96)',
+                        color: isDarkTheme ? '#fff9f2' : '#17120f',
+                        border: `1px solid ${isDarkTheme ? '#3a2a20' : '#ead8ca'}`,
+                        borderRadius: '14px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        lineHeight: '20px',
+                        padding: '10px 12px',
+                        boxShadow: isDarkTheme
+                            ? '0 18px 55px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04)'
+                            : '0 18px 55px rgba(80, 45, 18, 0.14)',
+                        backdropFilter: 'blur(14px)',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#45d483',
+                            secondary: '#08120c',
+                        },
+                    },
+                    error: {
+                        iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#fff9f2',
+                        },
                     },
                 }}
             />
 
-            {!isFullscreen && <Header />}
             <main className={`
                 ${isFullscreen ? 'fullscreen-main h-screen w-screen flex-1 min-h-0' : 'flex-1 min-h-0'}
             `} role="main" aria-label="Code diff editor">
