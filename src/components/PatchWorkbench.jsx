@@ -18,7 +18,7 @@ import { getSyntaxTokens } from '../utils/syntaxHighlight';
 import { getMonacoLanguageId } from '../utils/monacoLanguages';
 import { cn } from '../utils/cn';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
 const DiffEditor = lazy(() =>
     import('@monaco-editor/react').then(module => ({ default: module.DiffEditor }))
 );
@@ -132,38 +132,8 @@ const readPatchResponse = async (response) => {
     return response.text();
 };
 
-const fetchPatchTextFromCandidates = async (candidates) => {
-    let lastError = 'Could not fetch patch URL';
-
-    for (const candidate of candidates) {
-        try {
-            const response = await fetch(candidate, {
-                headers: {
-                    Accept: 'text/plain, text/x-diff, text/x-patch',
-                },
-            });
-
-            if (!response.ok) {
-                lastError = `HTTP ${response.status}`;
-                continue;
-            }
-
-            const text = await readPatchResponse(response);
-            if (text) {
-                return { text, sourceUrl: candidate };
-            }
-
-            lastError = 'Response was empty';
-        } catch (error) {
-            lastError = error?.message || 'Fetch failed';
-        }
-    }
-
-    return { text: '', sourceUrl: '', error: lastError };
-};
-
 const getPatchImportEndpoint = () => (
-    API_URL ? `${API_URL.replace(/\/$/, '')}/api/patch/import` : '/api/patch/import'
+    API_URL ? `${API_URL}/api/patch/import` : '/api/patch/import'
 );
 
 export default function PatchWorkbench({
@@ -340,34 +310,19 @@ export default function PatchWorkbench({
                 }
             }
 
-            const directResult = await fetchPatchTextFromCandidates(urls);
-            if (directResult.text && importPatchText(directResult.text, 'Imported from link', false, false)) {
-                return;
-            }
-
             setImportNotice({
                 type: 'error',
                 title: 'Patch link import failed',
-                message: directResult.error
-                    ? `${message} Direct fetch also failed: ${directResult.error}.`
-                    : message,
+                message,
             });
         } catch (error) {
             console.error('Patch URL import failed:', error);
-            const directResult = await fetchPatchTextFromCandidates(urls);
-            if (directResult.text && importPatchText(directResult.text, 'Imported from link', false, false)) {
-                setIsFetchingUrl(false);
-                return;
-            }
-
             setImportNotice({
                 type: 'error',
                 title: 'Patch proxy unavailable',
-                message: directResult.error
-                    ? `The patch proxy is not reachable, and direct fetch failed: ${directResult.error}. Upload a .patch file or paste the raw diff for now.`
-                    : API_URL
-                        ? 'The configured backend is not reachable. Upload a .patch file or paste the raw diff for now.'
-                        : 'Local GitHub import needs the dev proxy. Restart npm start, then try the link again.',
+                message: API_URL
+                    ? 'The configured backend is not reachable. Upload a .patch file or paste the raw diff for now.'
+                    : 'The patch proxy is not reachable. Restart the CodeDiff server, then try the link again.',
             });
         } finally {
             setIsFetchingUrl(false);

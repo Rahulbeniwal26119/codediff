@@ -29,7 +29,7 @@ const Editor = lazy(() =>
   import('@monaco-editor/react').then(module => ({ default: module.default }))
 );
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
 const ACCEPTED_CODE_FILES = '.txt,.js,.jsx,.ts,.tsx,.json,.html,.css,.py,.java,.c,.cpp,.cs,.php,.rb,.go,.rs,.swift,.kt,.scala,.sh,.yml,.yaml,.xml,.md';
 
 export default function CodeEditor() {

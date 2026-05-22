@@ -5,7 +5,9 @@ const path = require('path');
 const BUILD_DIR = path.resolve(process.env.BUILD_DIR || path.join(__dirname, 'build'));
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 3001);
+const BACKEND_API_URL = (process.env.BACKEND_API_URL || 'https://backend.takovibe.com').replace(/\/$/, '');
 const MAX_PATCH_BYTES = 1_500_000;
+const MAX_PROXY_BODY_BYTES = 5_000_000;
 const ALLOWED_PATCH_HOSTS = new Set([
     'github.com',
     'patch-diff.githubusercontent.com',
@@ -43,6 +45,24 @@ const sendJson = (res, status, body) => {
     res.writeHead(status, jsonHeaders);
     res.end(JSON.stringify(body));
 };
+
+const readRequestBody = (req, maxBytes = MAX_PROXY_BODY_BYTES) => new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+
+    req.on('data', (chunk) => {
+        size += chunk.length;
+        if (size > maxBytes) {
+            reject(new Error('Request body too large'));
+            req.destroy();
+            return;
+        }
+        chunks.push(chunk);
+    });
+
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+});
 
 const readRequestJson = (req) => new Promise((resolve, reject) => {
     let body = '';
@@ -179,6 +199,42 @@ const handlePatchImport = async (req, res) => {
     });
 };
 
+const proxyBackendApi = async (req, res, requestUrl) => {
+    try {
+        const body = req.method === 'GET' || req.method === 'HEAD'
+            ? undefined
+            : await readRequestBody(req);
+
+        const backendUrl = `${BACKEND_API_URL}${requestUrl.pathname}${requestUrl.search}`;
+        const response = await fetchWithTimeout(backendUrl, {
+            method: req.method,
+            headers: {
+                Accept: req.headers.accept || 'application/json',
+                'Content-Type': req.headers['content-type'] || 'application/json',
+            },
+            body,
+        }, 15000);
+
+        const headers = {};
+        response.headers.forEach((value, key) => {
+            if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+                headers[key] = value;
+            }
+        });
+
+        headers['Access-Control-Allow-Origin'] = '*';
+        const responseBody = Buffer.from(await response.arrayBuffer());
+        res.writeHead(response.status, headers);
+        res.end(responseBody);
+    } catch (error) {
+        sendJson(res, 502, {
+            error: error.name === 'AbortError'
+                ? 'Backend API timed out'
+                : error.message || 'Backend API request failed',
+        });
+    }
+};
+
 const getSafeFilePath = (pathname) => {
     const decodedPath = decodeURIComponent(pathname);
     const normalizedPath = path.normalize(decodedPath).replace(/^(\.\.[/\\])+/, '');
@@ -231,6 +287,17 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    if (requestUrl.pathname.startsWith('/api/code-diff')) {
+        if (req.method === 'OPTIONS') {
+            res.writeHead(204, jsonHeaders);
+            res.end();
+            return;
+        }
+
+        await proxyBackendApi(req, res, requestUrl);
+        return;
+    }
+
     if (req.method !== 'GET' && req.method !== 'HEAD') {
         sendJson(res, 405, { error: 'Method not allowed' });
         return;
@@ -248,4 +315,9 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
     console.log(`CodeDiff production server listening on http://${HOST}:${PORT}`);
     console.log(`Serving build from ${BUILD_DIR}`);
+});
+
+server.on('error', (error) => {
+    console.error('CodeDiff production server failed to start:', error);
+    process.exit(1);
 });

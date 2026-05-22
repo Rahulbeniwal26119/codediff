@@ -14,6 +14,7 @@ PM2_NAME="${PM2_NAME:-$APP_NAME}"
 PM2_USER="${PM2_USER:-${SUDO_USER:-}}"
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-3001}"
+BACKEND_API_URL="${BACKEND_API_URL:-https://backend.takovibe.com}"
 LOG_FILE="${LOG_FILE:-/var/log/codediff-build.log}"
 
 log() {
@@ -52,6 +53,7 @@ pm2_cmd() {
             NODE_ENV="${NODE_ENV:-production}" \
             HOST="$HOST" \
             PORT="$PORT" \
+            BACKEND_API_URL="$BACKEND_API_URL" \
             BUILD_DIR="${BUILD_DIR:-${APP_DIR}/build}" \
             pm2 "$@"
     else
@@ -119,6 +121,7 @@ chmod -R 755 "$APP_DIR"
 export NODE_ENV=production
 export HOST
 export PORT
+export BACKEND_API_URL
 export BUILD_DIR="${APP_DIR}/build"
 
 restart_pm2
