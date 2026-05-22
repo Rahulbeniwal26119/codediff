@@ -132,8 +132,38 @@ const readPatchResponse = async (response) => {
     return response.text();
 };
 
+const fetchPatchTextFromCandidates = async (candidates) => {
+    let lastError = 'Could not fetch patch URL';
+
+    for (const candidate of candidates) {
+        try {
+            const response = await fetch(candidate, {
+                headers: {
+                    Accept: 'text/plain, text/x-diff, text/x-patch',
+                },
+            });
+
+            if (!response.ok) {
+                lastError = `HTTP ${response.status}`;
+                continue;
+            }
+
+            const text = await readPatchResponse(response);
+            if (text) {
+                return { text, sourceUrl: candidate };
+            }
+
+            lastError = 'Response was empty';
+        } catch (error) {
+            lastError = error?.message || 'Fetch failed';
+        }
+    }
+
+    return { text: '', sourceUrl: '', error: lastError };
+};
+
 const getPatchImportEndpoint = () => (
-    API_URL ? `${API_URL}/api/patch/import/` : '/api/patch/import/'
+    API_URL ? `${API_URL.replace(/\/$/, '')}/api/patch/import` : '/api/patch/import'
 );
 
 export default function PatchWorkbench({
@@ -237,6 +267,7 @@ export default function PatchWorkbench({
 
         setPatchText(nextPatch);
         setSelectedFileIndex(0);
+        setFileViewMode('patch');
         setIsImportOpen(false);
     };
 
@@ -254,6 +285,7 @@ export default function PatchWorkbench({
         setDraftPatch(nextPatch.trim());
         setImportNotice(null);
         setSelectedFileIndex(0);
+        setFileViewMode('patch');
         setIsImportOpen(false);
         if (showSuccess) {
             toast.success(`${successLabel}: ${parsed.stats.files} changed file${parsed.stats.files === 1 ? '' : 's'}`);
@@ -273,6 +305,7 @@ export default function PatchWorkbench({
         setImportNotice(null);
 
         try {
+            let message = 'The backend proxy could not fetch this patch. Upload a .patch file or paste the raw diff for now.';
             const proxyResponse = await fetch(getPatchImportEndpoint(), {
                 method: 'POST',
                 headers: {
@@ -297,35 +330,44 @@ export default function PatchWorkbench({
             }
 
             if (proxyResponse.status === 404 && !API_URL) {
-                setImportNotice({
-                    type: 'warning',
-                    title: 'Restart needed for local link import',
-                    message: 'The local proxy route is new. Restart npm start, then GitHub PR and commit links can be fetched through /api/patch/import/.',
-                });
-                return;
+                message = 'The local proxy route is new. Restart npm start so /api/patch/import is available.';
+            } else {
+                try {
+                    const errorData = await proxyResponse.json();
+                    message = errorData.error || message;
+                } catch {
+                    // Keep fallback message.
+                }
             }
 
-            let message = 'The backend proxy could not fetch this patch. Upload a .patch file or paste the raw diff for now.';
-            try {
-                const errorData = await proxyResponse.json();
-                message = errorData.error || message;
-            } catch {
-                // Keep fallback message.
+            const directResult = await fetchPatchTextFromCandidates(urls);
+            if (directResult.text && importPatchText(directResult.text, 'Imported from link', false, false)) {
+                return;
             }
 
             setImportNotice({
                 type: 'error',
                 title: 'Patch link import failed',
-                message,
+                message: directResult.error
+                    ? `${message} Direct fetch also failed: ${directResult.error}.`
+                    : message,
             });
         } catch (error) {
             console.error('Patch URL import failed:', error);
+            const directResult = await fetchPatchTextFromCandidates(urls);
+            if (directResult.text && importPatchText(directResult.text, 'Imported from link', false, false)) {
+                setIsFetchingUrl(false);
+                return;
+            }
+
             setImportNotice({
                 type: 'error',
                 title: 'Patch proxy unavailable',
-                message: API_URL
-                    ? 'The configured backend is not reachable. Upload a .patch file or paste the raw diff for now.'
-                    : 'Local GitHub import needs the dev proxy. Restart npm start, then try the link again.',
+                message: directResult.error
+                    ? `The patch proxy is not reachable, and direct fetch failed: ${directResult.error}. Upload a .patch file or paste the raw diff for now.`
+                    : API_URL
+                        ? 'The configured backend is not reachable. Upload a .patch file or paste the raw diff for now.'
+                        : 'Local GitHub import needs the dev proxy. Restart npm start, then try the link again.',
             });
         } finally {
             setIsFetchingUrl(false);
@@ -715,7 +757,7 @@ export default function PatchWorkbench({
                                         </h2>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <div className={cn('grid h-8 grid-cols-2 rounded-lg border p-1', borderClass, subtleBg)}>
                                             <button
                                                 type="button"
@@ -774,7 +816,6 @@ export default function PatchWorkbench({
                                     </div>
                                 </div>
                             </div>
-
                             {fileViewMode === 'compare' ? (
                                 <div className="min-h-0 flex-1 p-3">
                                     <div className={cn('flex h-full min-h-[560px] flex-col overflow-hidden rounded-2xl border shadow-[0_18px_55px_rgba(0,0,0,0.22)]', borderClass, isDarkTheme ? 'bg-[#0b0d0f]' : 'bg-white')}>

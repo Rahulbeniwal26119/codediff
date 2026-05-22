@@ -13,16 +13,21 @@ function App({ language }) {
     useEffect(() => {
         // Suppress ResizeObserver errors
         const handleError = (event) => {
-            if (event.message && event.message.includes('ResizeObserver loop completed')) {
+            const message = event.message || '';
+            if (
+                message === 'Script error.'
+                || message.includes('ResizeObserver loop completed')
+                || message.includes('ResizeObserver loop limit exceeded')
+            ) {
                 event.preventDefault();
                 return false;
             }
         };
 
-        window.addEventListener('error', handleError);
+        window.addEventListener('error', handleError, true);
         
         return () => {
-            window.removeEventListener('error', handleError);
+            window.removeEventListener('error', handleError, true);
         };
     }, []);
 

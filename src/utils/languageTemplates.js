@@ -832,7 +832,7 @@ void main() {
 void main() {
   List<int> numbers = [1, 2, 3, 4, 5, 6];
   var stats = Calculator.getStats(numbers);
-  print('Stats: \$stats');
+  print('Stats: $stats');
   print('Sum: \${stats['sum']}, Average: \${stats['average'].toStringAsFixed(2)}');
 }`
     },
@@ -869,7 +869,7 @@ void main() {
   def main(args: Array[String]): Unit = {
     val numbers = List(1, 2, 3, 4, 5, 6)
     val stats = getStats(numbers)
-    println(s"Stats: \$stats")
+    println(s"Stats: $stats")
     println(f"Sum: \${stats.sum}, Average: \${stats.average}%.2f")
   }
 }`

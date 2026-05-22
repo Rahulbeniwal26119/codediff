@@ -41,7 +41,6 @@ export default function Share({ compact = false }) {
     const { leftContent, rightContent, selectedLanguage, isDarkTheme } = useCode();
 
     const handleShare = async () => {
-        const accessToken = localStorage.getItem('access_token');
         if (!leftContent || !rightContent) {
             toast.error(
                 'Please add content to both sides before sharing',
@@ -69,7 +68,6 @@ export default function Share({ compact = false }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`,
                 },
                 body: JSON.stringify({
                     code_before: leftContent,
@@ -98,13 +96,6 @@ export default function Share({ compact = false }) {
             }
 
             const data = await response.json();
-            console.log(data)
-            console.log(
-                {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`,
-                }
-            )
             const uuid = data.data.unique_identifier;
             // take current url and append uuid to it
             const shareUrl = `${window.location.origin}/${uuid}/`;

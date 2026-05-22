@@ -4,6 +4,20 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import App from './App';
 
+const suppressNoisyDevOverlayError = (event) => {
+  const message = event?.message || '';
+  if (
+    message === 'Script error.'
+    || message.includes('ResizeObserver loop completed')
+    || message.includes('ResizeObserver loop limit exceeded')
+  ) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+};
+
+window.addEventListener('error', suppressNoisyDevOverlayError, true);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>

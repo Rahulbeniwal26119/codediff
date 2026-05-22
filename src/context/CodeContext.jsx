@@ -11,7 +11,6 @@ export function CodeProvider({ children }) {
     const [leftContent, setLeftContent] = useState('');
     const [rightContent, setRightContent] = useState('');
     const [selectedLanguage, setSelectedLanguage] = useState('json');
-    const [showUpdateButton, setShowUpdateButton] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     
@@ -101,8 +100,6 @@ export function CodeProvider({ children }) {
             setRightContent,
             selectedLanguage,
             setSelectedLanguage,
-            showUpdateButton,
-            setShowUpdateButton,
             isDarkTheme,
             setIsDarkTheme,
             isSideBySide,

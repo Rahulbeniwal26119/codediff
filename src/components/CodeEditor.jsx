@@ -16,6 +16,7 @@ import LoadingSpinner from './LoadingSpinner';
 import { getLanguageDisplayName, getMonacoLanguageId } from '../utils/monacoLanguages';
 import ExecutionResultModal from './ExecutionResultModal';
 import PatchWorkbench from './PatchWorkbench';
+import Share from './Share';
 import { formatCode } from '../utils/codeFormatter';
 import { getJsonSemanticSummary } from '../utils/jsonSemanticDiff';
 import { cn } from '../utils/cn';
@@ -40,7 +41,6 @@ export default function CodeEditor() {
         setLeftContent,
         setRightContent,
         setSelectedLanguage,
-        setShowUpdateButton,
         isSideBySide,
         setIsSideBySide,
         isFullscreen,
@@ -213,13 +213,6 @@ export default function CodeEditor() {
                     setLeftContent(result.data.code_before);
                     setRightContent(result.data.code_after);
                     setSelectedLanguage(result.data.language);
-                    
-                    if (localStorage?.access_token && result.data.access_token && 
-                        localStorage?.access_token === result.data.access_token) {
-                        setShowUpdateButton(true);
-                    } else {
-                        setShowUpdateButton(false);
-                    }
                     return;
                 }
 
@@ -250,13 +243,6 @@ export default function CodeEditor() {
                 setSelectedLanguage(result.data.language);
 
                 toast.success('Diff loaded successfully');
-                
-                if (localStorage?.access_token && result.data.access_token && 
-                    localStorage?.access_token === result.data.access_token) {
-                    setShowUpdateButton(true);
-                } else {
-                    setShowUpdateButton(false);
-                }
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     console.error('Error fetching data:', error);
@@ -272,7 +258,7 @@ export default function CodeEditor() {
         return () => {
             abortController.abort();
         };
-    }, [diffId, location.pathname, setLeftContent, setRightContent, setSelectedLanguage, setShowUpdateButton]);
+    }, [diffId, location.pathname, setLeftContent, setRightContent, setSelectedLanguage]);
 
 
     const handleExecute = useCallback((code, lang) => {
@@ -572,6 +558,7 @@ export default function CodeEditor() {
                                     <FaExpand className="h-3.5 w-3.5" />
                                     <span className="hidden sm:inline">Editor</span>
                                 </button>
+                                {workbenchMode === 'compare' && <Share compact />}
                             </div>
                         </div>
                     )}
@@ -805,6 +792,7 @@ export default function CodeEditor() {
                             </div>
 
                             <div className="flex shrink-0 items-center gap-2">
+                                <Share compact />
                                 <button
                                     type="button"
                                     onClick={() => setIsFullscreen(false)}
